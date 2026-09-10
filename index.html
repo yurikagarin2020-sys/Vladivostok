@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0e4a6e">
+<title>Экскурсия по Владивостоку</title>
+<style>
+  :root{
+    --sea:#0e4a6e;
+    --sea-light:#1a76a8;
+    --bg:#f4f7fa;
+    --accent:#ffb703;
+    --text:#22303c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:"Segoe UI",Arial,sans-serif;color:var(--text);
+    background:var(--bg);line-height:1.6;
+    overflow-x:hidden;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* ===== ЗАГЛАВНЫЙ ЭКРАН ===== */
+  /* Фон по умолчанию — градиент. Фото hero.jpg подставится скриптом ниже,
+     а если файла нет — используется ссылка REMOTE_HERO_URL (см. скрипт). */
+  .hero{
+    height:92vh;
+    height:100svh;
+    background:linear-gradient(180deg,#2a5d80,#0b3c5d) center/cover no-repeat;
+    display:flex;align-items:flex-end;position:relative;
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(0,20,40,.1) 0%,rgba(0,20,40,.78) 100%);
+  }
+  .hero-text{position:relative;z-index:2;padding:0 8% 9vh;color:#fff;max-width:1100px}
+  .hero-text h1{
+    font-size:clamp(2.2rem,6vw,4.5rem);letter-spacing:3px;
+    text-transform:uppercase;text-shadow:0 2px 12px rgba(0,0,0,.5);
+  }
+  .hero-text p{font-size:clamp(1rem,2vw,1.3rem);margin-top:10px;opacity:.95}
+
+  /* ===== МЕНЮ НА ГЛАВНОМ ЭКРАНЕ ===== */
+  .hero-menu{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+  .hero-menu a{
+    color:#fff;text-decoration:none;cursor:pointer;
+    padding:11px 24px;border-radius:26px;
+    background:rgba(8,40,60,.55);
+    border:1.5px solid rgba(255,255,255,.65);
+    -webkit-backdrop-filter:blur(4px);
+    backdrop-filter:blur(4px);
+    font-size:.98rem;font-weight:600;transition:.25s;
+  }
+  .hero-menu a:hover,
+  .hero-menu a:active{background:var(--accent);border-color:var(--accent);color:#143246}
+
+  /* ===== ПАНЕЛИ РАЗДЕЛОВ ===== */
+  .panel{display:none;padding:60px 8% 70px;max-width:1300px;margin:0 auto}
+  .panel.active{display:block;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  .panel h2{font-size:clamp(1.6rem,3.5vw,2.4rem);color:var(--sea)}
+  .panel .sub{color:#5a6b78;margin:8px 0 34px}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px}
+  .card{
+    background:#fff;border-radius:14px;padding:24px;
+    border-top:4px solid var(--sea-light);
+    box-shadow:0 6px 18px rgba(10,50,80,.08);transition:.25s;
+  }
+  .card:hover{transform:translateY(-5px);box-shadow:0 12px 26px rgba(10,50,80,.16)}
+  .card h3{color:var(--sea);font-size:1.15rem;margin-bottom:8px}
+  .card .stars{color:var(--accent);letter-spacing:2px}
+  .card p{font-size:.95rem}
+
+  /* ===== КНОПКА ТЕЛЕФОНА ===== */
+  .phone{
+    display:inline-block;margin-top:14px;
+    color:var(--sea);text-decoration:none;font-weight:700;
+    border:1.5px solid var(--sea-light);border-radius:22px;
+    padding:7px 16px;font-size:.92rem;transition:.25s;
+  }
+  .phone:hover{background:var(--sea-light);color:#fff}
+
+  /* ===== ОКЕАНАРИУМ ===== */
+  .ocean-link{display:block;text-decoration:none;color:inherit;margin-top:10px}
+  .ocean-card{
+    display:flex;align-items:center;gap:26px;flex-wrap:wrap;
+    background:linear-gradient(120deg,#0b3c5d,#1a76a8);color:#fff;
+    border-radius:18px;padding:36px;transition:.25s;
+    box-shadow:0 10px 30px rgba(10,60,90,.25);
+  }
+  .ocean-card:hover{transform:scale(1.015)}
+  .ocean-card .emoji{font-size:3.6rem}
+  .ocean-btn{
+    display:inline-block;margin-top:16px;background:var(--accent);color:#143246;
+    font-weight:700;padding:12px 28px;border-radius:30px;text-decoration:none;
+  }
+
+  footer{background:#0b3c5d;color:#cfe3ef;text-align:center;padding:26px;font-size:.9rem;margin-top:40px}
+
+  /* ===== ПЛАНШЕТЫ И ТЕЛЕФОНЫ ===== */
+  @media (max-width:768px){
+    .hero-text{padding:0 6% 40px}
+    .hero-menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+    .hero-menu a{text-align:center;padding:14px 10px;font-size:1rem;border-radius:14px}
+    .panel{padding:44px 6% 56px}
+    .panel .sub{margin-bottom:24px}
+    .cards{grid-template-columns:1fr;gap:16px}
+    .card{padding:20px}
+    .phone{display:block;text-align:center;padding:12px 16px;font-size:1rem}
+    .ocean-card{padding:26px 22px;gap:16px}
+    .ocean-card .emoji{font-size:2.8rem}
+    .ocean-btn{display:block;text-align:center;padding:13px 20px}
+    footer{padding:22px 16px;font-size:.85rem}
+  }
+  @media (max-width:380px){
+    .hero-menu{grid-template-columns:1fr}
+    .hero-text h1{letter-spacing:1px}
+  }
+  @media (min-width:1400px){
+    .panel{padding:70px 0}
+    .hero-text h1{letter-spacing:5px}
+  }
+</style>
+</head>
+<body id="top">
+
+<!-- ЗАГЛАВНЫЙ ЭКРАН С МЕНЮ -->
+<header class="hero">
+  <div class="hero-text">
+    <h1>Владивосток</h1>
+    <nav class="hero-menu">
+      <a data-goto="hotels">Отели</a>
+      <a data-goto="bays">Бухты</a>
+      <a data-goto="places">Места</a>
+      <a data-goto="oceanarium">Океанариум</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ================= ПАНЕЛЬ 1: ОТЕЛИ ================= -->
+<section class="panel active" id="panel-hotels">
+  <h2>🏨 Отели Владивостока</h2>
+  <p class="sub">Где остановиться во время отдыха</p>
+  <div class="cards">
+    <div class="card">
+      <h3>Hyatt Regency Vladivostok</h3>
+      <p class="stars">★★★★★</p>
+      <p>В самом центре, у Золотого моста. Панорамные виды на бухту Золотой Рог, бассейн и спа.</p>
+      <a class="phone" href="tel:+74232621234">📞 +7 (423) 262-12-34</a>
+    </div>
+    <div class="card">
+      <h3>Lotte Hotel Vladivostok</h3>
+      <p class="stars">★★★★★</p>
+      <p>Роскошный отель бизнес-класса: панорамный лифт, ресторан высокой кухни, отличные завтраки.</p>
+      <a class="phone" href="tel:+74232629000">📞 +7 (423) 262-90-00</a>
+    </div>
+    <div class="card">
+      <h3>AZIMUT Отель Владивосток</h3>
+      <p class="stars">★★★★</p>
+      <p>На берегу Амурского залива, в 10 минутах от центра. Из номеров видно мосты.</p>
+      <a class="phone" href="tel:+74232629800">📞 +7 (423) 262-98-00</a>
+    </div>
+    <div class="card">
+      <h3>Отель «Экватор»</h3>
+      <p class="stars">★★★★</p>
+      <p>Комфортные номера рядом с центром и ж/д вокзалом. Лучший вариант по цене и качеству.</p>
+      <a class="phone" href="tel:+74232490090">📞 +7 (423) 249-00-90</a>
+    </div>
+    <div class="card">
+      <h3>Отель «Версаль»</h3>
+      <p class="stars">★★★</p>
+      <p>Уютный отель в японском стиле на исторической Светланской улице.</p>
+      <a class="phone" href="tel:+74232608800">📞 +7 (423) 260-88-00</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ПАНЕЛЬ 2: БУХТЫ ================= -->
+<section class="panel" id="panel-bays">
+  <h2>🌊 Бухты Владивостока</h2>
+  <p class="sub">Город окружён десятками бухт — вот самые известные</p>
+  <div class="cards">
+    <div class="card">
+      <h3>Бухта Золотой Рог</h3>
+      <p>Сердце города и главный порт. Над ней парит Золотой мост — визитная карточка Владивостока.</p>
+    </div>
+    <div class="card">
+      <h3>Амурский залив</h3>
+      <p>Лучшие закаты города, набережная Цесаревича и спуски к воде.</p>
+    </div>
+    <div class="card">
+      <h3>Бухта Диомид</h3>
+      <p>Судоремонтные доки и колоритные виды на пролив Босфор Восточный и Русский мост.</p>
+    </div>
+    <div class="card">
+      <h3>Бухта Улисс</h3>
+      <p>Тихое место с яхт-клубами и панорамой пролива Босфор Восточный.</p>
+    </div>
+    <div class="card">
+      <h3>Бухта Лазурная (Шамора)</h3>
+      <p>Самый известный пляж под Владивостоком: песок, дюны, серфинг.</p>
+    </div>
+    <div class="card">
+      <h3>Бухта Русская</h3>
+      <p>На острове Русский: бирюзовая вода, скалы — одно из красивейших мест побережья.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ПАНЕЛЬ 3: МЕСТА ================= -->
+<section class="panel" id="panel-places">
+  <h2>📍 Что стоит посетить</h2>
+  <p class="sub">Главные точки на маршруте экскурсии</p>
+  <div class="cards">
+    <div class="card">
+      <h3>Золотой и Русский мосты</h3>
+      <p>Два символа города. Русский мост — самый длинный вантовый мост России.</p>
+    </div>
+    <div class="card">
+      <h3>Сопка Орлиное гнездо</h3>
+      <p>Лучшая обзорная площадка: весь город, мосты и залив как на ладони.</p>
+    </div>
+    <div class="card">
+      <h3>Корабельная набережная и С-56</h3>
+      <p>Мемориал боевой славы и легендарная подводная лодка-музей.</p>
+    </div>
+    <div class="card">
+      <h3>Светланская улица</h3>
+      <p>Старейшая улица города с дореволюционными особняками и видом на море.</p>
+    </div>
+    <div class="card">
+      <h3>Владивостокская крепость</h3>
+      <p>Музей-заповедник: настоящие форты и орудия начала XX века.</p>
+    </div>
+    <div class="card">
+      <h3>Токаревский маяк и фуникулёр</h3>
+      <p>Старейший маяк Приморья и подъём на сопку с панорамой Амурского залива.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ПАНЕЛЬ 4: ОКЕАНАРИУМ ================= -->
+<section class="panel" id="panel-oceanarium">
+  <h2>🐠 Океанариум</h2>
+  <p class="sub">Крупнейший океанариум России — на острове Русский</p>
+  <a class="ocean-link" href="https://primocean.ru/" target="_blank" rel="noopener">
+    <div class="ocean-card">
+      <div class="emoji">🐋</div>
+      <div>
+        <h3 style="font-size:1.4rem;color:#fff">Приморский океанариум</h3>
+        <p>Дельфины, акулы, белухи и сотни видов обитателей Японского, Охотского и других морей. Нажмите, чтобы открыть официальный сайт — там билеты, расписание и афиша.</p>
+        <span class="ocean-btn">Открыть сайт primocean.ru →</span>
+      </div>
+    </div>
+  </a>
+</section>
+
+<footer>
+  Экскурсия по Владивостоку · Сделано с любовью студентом ВВГУ 🌉
+</footer>
+
+<script>
+  /* ============================================================
+     ФОТО ГЛАВНОГО ЭКРАНА
+     1) Если рядом с index.html лежит hero.jpg — оно подставится само.
+     2) Если файла нет — можно вставить прямую ссылку на фото
+        из интернета в кавычки ниже (должна открываться как чистая
+        картинка в новой вкладке). Пример поиска: Wikimedia Commons,
+        запрос «Zolotoy Bridge Vladivostok».
+  ============================================================ */
+  const REMOTE_HERO_URL = ""; // <-- сюда вставьте ссылку, например "https://...jpg"
+
+  const hero = document.querySelector('.hero');
+  const test = new Image();
+  test.onload = () => { hero.style.backgroundImage = 'url("hero.jpg")'; };
+  test.onerror = () => {
+    if (REMOTE_HERO_URL) hero.style.backgroundImage = `url("${REMOTE_HERO_URL}")`;
+  };
+  test.src = 'hero.jpg';
+
+  /* ===== Переключение разделов ===== */
+  const panels = [...document.querySelectorAll('.panel')];
+  const order  = ['hotels','bays','places','oceanarium'];
+  let current = 0;
+
+  function show(i, scroll = true){
+    current = (i + order.length) % order.length;
+    panels.forEach(p => p.classList.toggle('active', p.id === 'panel-' + order[current]));
+    if (scroll){
+      document.getElementById('panel-' + order[current]).scrollIntoView({behavior:'smooth'});
+    }
+  }
+
+  // Кнопки меню на главном экране
+  document.querySelectorAll('.hero-menu a[data-goto]').forEach(a => {
+    a.addEventListener('click', () => show(order.indexOf(a.dataset.goto)));
+  });
+
+  // ПК: стрелки на клавиатуре
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft')  show(current - 1);
+    if (e.key === 'ArrowRight') show(current + 1);
+  });
+
+  // Телефон: свайп влево/вправо
+  let startX = 0, startY = 0;
+  document.addEventListener('touchstart', e => {
+    startX = e.changedTouches[0].clientX;
+    startY = e.changedTouches[0].clientY;
+  }, {passive:true});
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5){
+      show(current + (dx < 0 ? 1 : -1));
+    }
+  }, {passive:true});
+
+  // Открытие нужного раздела по ссылке вида index.html#bays
+  const hash = location.hash.replace('#','');
+  const startIdx = order.indexOf(hash);
+  if (startIdx > 0) show(startIdx, false);
+</script>
+
+</body>
+</html>
