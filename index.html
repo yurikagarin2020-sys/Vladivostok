@@ -2,9 +2,47 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
+<meta name="generator" content="Adobe Dreamweaver">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0e4a6e">
 <title>Экскурсия по Владивостоку</title>
+<!--
+  ============================================================
+  Экскурсия по Владивостоку — учебная работа (Adobe Dreamweaver)
+  Версия 4 — исправлены ошибки с картой:
+  1) добавлена встроенная интерактивная карта маршрута (Яндекс);
+  2) ссылки на Яндекс/Google Карты формируются по координатам
+     сразу при выборе мест (раньше — только в момент клика, и
+     «Открыть в новой вкладке» давало пустую ссылку «#»);
+  3) все 21 место маршрута получили точные координаты;
+  4) точка «Амурский залив» перенесена на берег Амурского залива
+     (Спортивная гавань): раньше координаты указывали на набережную
+     Цесаревича, которая лежит на бухте Золотой Рог, и маршрут
+     «промахивался» мимо залива. Теперь — пляж Спортивная гавань
+     (43.1189, 131.8771), сверено с OpenStreetMap.
+  5) по заданию: удалены точка маршрута и карточка «Амурский залив»; в
+     «Достопримечательности» добавлены Маяк Эгершельд и Триумфальная
+     арка цесаревича Николая, в «Места для посещения» — Музей
+     им. В. К. Арсеньева и Приморская картинная галерея;
+  6) маршрут строится строго по координатам: «Ж/д вокзал» уточнён
+     (43.1112, 131.8816), у «Бухты Русской» убран текстовый запрос,
+     который мог вести в одноимённую бухту на другом острове.
+  Версия 5 — изменения по заданию:
+  7) удалены точка маршрута и карточка «Железнодорожный вокзал»;
+     пресет «Классика за день» теперь начинается от Корабельной
+     набережной;
+  8) в «Достопримечательности» добавлены 3 новых места: сопка
+     Бурачка (Цветные скалы), Ворошиловская батарея (о. Русский)
+     и Набережная Цесаревича (Спортивная гавань);
+  9) в «Бухты» добавлены 3 места, где можно плавать: бухта Соболь
+     и бухта Тельковского (оба — о. Русский) и бухта Патрокл.
+  Версия 6 — изменения по заданию:
+  10) удалена карточка «Маяк Эгершельд (Токаревский маяк)» из раздела
+      «Достопримечательности» как дубль Токаревского маяка (карточка
+      «Токаревский маяк и фуникулёр» и точка маршрута остаются);
+      счётчик карусели обновлён: 11 → 10.
+  ============================================================
+-->
 <style>
   :root{
     --sea:#0e4a6e;
@@ -23,8 +61,6 @@
   }
 
   /* ===== ЗАГЛАВНЫЙ ЭКРАН ===== */
-  /* Фон по умолчанию — градиент. Фото hero.jpg подставится скриптом ниже,
-     а если файла нет — используется ссылка REMOTE_HERO_URL (см. скрипт). */
   .hero{
     height:92vh;
     height:100svh;
@@ -64,40 +100,157 @@
   .panel h2{font-size:clamp(1.6rem,3.5vw,2.4rem);color:var(--sea)}
   .panel .sub{color:#5a6b78;margin:8px 0 34px}
 
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px}
-  .card{
-    background:#fff;border-radius:14px;padding:24px;
-    border-top:4px solid var(--sea-light);
-    box-shadow:0 6px 18px rgba(10,50,80,.08);transition:.25s;
+  /* ===== КАРУСЕЛИ (общие для всех разделов) ===== */
+  .slider{display:flex;align-items:center;gap:14px;margin-top:6px}
+  .s-arrow{
+    width:54px;height:54px;flex:none;
+    font-size:1.6rem;line-height:1;
+    background:var(--sea);color:#fff;
+    border:none;border-radius:50%;
+    cursor:pointer;transition:.25s;
+    box-shadow:0 6px 14px rgba(14,74,110,.3);
   }
-  .card:hover{transform:translateY(-5px);box-shadow:0 12px 26px rgba(10,50,80,.16)}
-  .card h3{color:var(--sea);font-size:1.15rem;margin-bottom:8px}
-  .card .stars{color:var(--accent);letter-spacing:2px}
-  .card p{font-size:.95rem}
+  .s-arrow:hover{background:var(--accent);color:#143246;transform:scale(1.1)}
+  .s-arrow:active{transform:scale(.94)}
 
-  /* ===== КНОПКА ТЕЛЕФОНА ===== */
-  .phone{
-    display:inline-block;margin-top:14px;
-    color:var(--sea);text-decoration:none;font-weight:700;
-    border:1.5px solid var(--sea-light);border-radius:22px;
-    padding:7px 16px;font-size:.92rem;transition:.25s;
+  .slide-card{
+    position:relative;overflow:hidden;
+    flex:1;min-width:0;
+    background:#fff;border-radius:18px;
+    border-top:5px solid var(--sea-light);
+    box-shadow:0 8px 24px rgba(10,50,80,.1);
+    padding:34px 34px 26px;
+    text-align:center;
+    animation:slideIn .35s ease;
   }
-  .phone:hover{background:var(--sea-light);color:#fff}
+  @keyframes slideIn{from{opacity:0;transform:translateX(var(--dir,20px))}to{opacity:1;transform:none}}
 
-  /* ===== ОКЕАНАРИУМ ===== */
-  .ocean-link{display:block;text-decoration:none;color:inherit;margin-top:10px}
-  .ocean-card{
-    display:flex;align-items:center;gap:26px;flex-wrap:wrap;
-    background:linear-gradient(120deg,#0b3c5d,#1a76a8);color:#fff;
-    border-radius:18px;padding:36px;transition:.25s;
-    box-shadow:0 10px 30px rgba(10,60,90,.25);
+  .slide-bg{
+    position:absolute;inset:0;z-index:0;
+    width:100%;height:100%;
+    object-fit:cover;display:none;
   }
-  .ocean-card:hover{transform:scale(1.015)}
-  .ocean-card .emoji{font-size:3.6rem}
-  .ocean-btn{
-    display:inline-block;margin-top:16px;background:var(--accent);color:#143246;
-    font-weight:700;padding:12px 28px;border-radius:30px;text-decoration:none;
+  .slide-card::before{
+    content:"";position:absolute;inset:0;z-index:1;
+    background:transparent;transition:.3s;
   }
+  .slide-card.photo{border-top-color:transparent;min-height:470px}
+  .slide-card.photo .slide-bg{display:block}
+  .slide-card.photo::before{
+    background:linear-gradient(180deg,
+      rgba(6,30,55,.18) 0%,
+      rgba(6,30,55,.45) 50%,
+      rgba(6,30,55,.88) 100%);
+  }
+  .slide-card.photo h3{color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.6)}
+  .slide-card.photo p{color:rgba(255,255,255,.96);text-shadow:0 1px 6px rgba(0,0,0,.55)}
+  .slide-card.photo .s-emoji{text-shadow:0 2px 12px rgba(0,0,0,.5)}
+  .slide-card.photo .type{background:rgba(255,255,255,.22);color:#fff}
+  .slide-card.photo .price{color:#ffe08a;text-shadow:0 1px 6px rgba(0,0,0,.55)}
+  .slide-card.photo .slide-btn{box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  .slide-card.photo h3 a{color:#fff;border-bottom-color:rgba(255,255,255,.7)}
+  .slide-card.photo h3 a:hover{color:#ffe08a;border-bottom-color:#ffe08a}
+  .slide-card.photo h3 .ext{color:#ffe08a}
+
+  .slide-overlay{position:relative;z-index:2}
+
+  .slide-card .s-emoji{font-size:3.2rem;line-height:1;margin-bottom:12px}
+  .slide-card h3{color:var(--sea);font-size:clamp(1.25rem,2.5vw,1.7rem);margin-bottom:10px}
+  .slide-card p{font-size:1rem;color:#3c4c58;max-width:640px;margin:0 auto}
+
+  /* тип размещения и цена (слайды отелей) */
+  .type{
+    display:inline-block;font-size:.8rem;font-weight:600;
+    background:#e8f2f8;color:var(--sea);
+    padding:3px 12px;border-radius:12px;margin-bottom:8px;
+  }
+  .price{color:#2e7d32;font-weight:700;font-size:.95rem;margin-top:10px}
+
+  /* ссылка-название отеля */
+  .slide-card h3 a{
+    color:inherit;text-decoration:none;
+    border-bottom:1.5px dashed rgba(26,118,168,.45);
+    transition:.2s;
+  }
+  .slide-card h3 a:hover{color:var(--sea-light);border-bottom-color:var(--sea-light)}
+  .slide-card h3 .ext{font-size:.75em;color:var(--sea-light);margin-left:4px}
+
+  .slide-btn{
+    display:inline-block;margin-top:20px;
+    background:var(--accent);color:#143246;
+    font-weight:700;text-decoration:none;
+    padding:12px 30px;border-radius:30px;
+    transition:.25s;
+  }
+  .slide-btn:hover{transform:scale(1.05);box-shadow:0 8px 20px rgba(255,183,3,.45)}
+
+  .slider-controls{
+    display:flex;align-items:center;justify-content:center;
+    gap:8px;margin-top:16px;
+  }
+  .dot{
+    width:11px;height:11px;border-radius:50%;
+    border:none;cursor:pointer;
+    background:#c3d5e0;transition:.25s;padding:0;
+  }
+  .dot.active{background:var(--sea);transform:scale(1.25)}
+  .counter{color:#5a6b78;font-size:.9rem;margin-left:10px}
+
+  /* ===== КОНСТРУКТОР МАРШРУТА ===== */
+  .route-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:22px;align-items:start}
+  .route-card{
+    background:#fff;border-radius:16px;padding:22px;
+    box-shadow:0 8px 24px rgba(10,50,80,.1);
+  }
+  .route-presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .route-presets button{
+    font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;
+    padding:9px 16px;border-radius:20px;
+    background:#fff;color:var(--sea);
+    border:1.5px solid var(--sea-light);transition:.2s;
+  }
+  .route-presets button:hover{background:#e8f2f8}
+
+  #routeList{
+    display:flex;flex-direction:column;
+    max-height:460px;overflow:auto;
+    border-top:1px solid #e6edf2;
+  }
+  .route-item{
+    display:flex;align-items:center;gap:12px;
+    padding:11px 6px;cursor:pointer;
+    border-bottom:1px solid #eef3f6;
+    transition:.15s;
+  }
+  .route-item:hover{background:#f2f8fb}
+  .route-item input{width:18px;height:18px;accent-color:var(--sea);flex:none;cursor:pointer}
+  .route-item .r-emoji{font-size:1.25rem;flex:none}
+  .route-item span:last-child{font-size:.97rem}
+
+  .route-side .route-count{
+    font-weight:700;color:var(--sea);margin-bottom:12px;font-size:1.05rem;
+  }
+
+  /* ===== ВСТРОЕННАЯ КАРТА МАРШРУТА ===== */
+  .route-map{margin-bottom:14px}
+  .route-map .map-status{font-size:.9rem;color:#5a6b78;margin-bottom:8px}
+  .route-map iframe{
+    display:block;width:100%;height:400px;
+    border:0;border-radius:16px;
+    box-shadow:0 8px 24px rgba(10,50,80,.12);
+    background:#dce7ef;
+  }
+  .map-btn{
+    display:block;text-align:center;
+    padding:14px 20px;border-radius:30px;
+    font-weight:700;text-decoration:none;
+    margin-bottom:10px;transition:.25s;
+  }
+  .map-btn.ya{background:var(--accent);color:#143246}
+  .map-btn.gg{background:var(--sea);color:#fff}
+  .map-btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(10,50,80,.25)}
+  .map-btn.off{opacity:.45;pointer-events:none}
+  .route-note{font-size:.88rem;color:#5a6b78;margin-top:10px}
 
   footer{background:#0b3c5d;color:#cfe3ef;text-align:center;padding:26px;font-size:.9rem;margin-top:40px}
 
@@ -105,20 +258,32 @@
   @media (max-width:768px){
     .hero-text{padding:0 6% 40px}
     .hero-menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
-    .hero-menu a{text-align:center;padding:14px 10px;font-size:1rem;border-radius:14px}
+    .hero-menu a{
+      text-align:center;padding:14px 10px;font-size:.95rem;border-radius:14px;
+      overflow-wrap:anywhere;hyphens:auto;line-height:1.35;
+    }
+    .hero-menu a:nth-child(5){grid-column:1 / -1}
     .panel{padding:44px 6% 56px}
     .panel .sub{margin-bottom:24px}
-    .cards{grid-template-columns:1fr;gap:16px}
-    .card{padding:20px}
-    .phone{display:block;text-align:center;padding:12px 16px;font-size:1rem}
-    .ocean-card{padding:26px 22px;gap:16px}
-    .ocean-card .emoji{font-size:2.8rem}
-    .ocean-btn{display:block;text-align:center;padding:13px 20px}
+
+    .slider{gap:8px}
+    .s-arrow{width:44px;height:44px;font-size:1.25rem}
+    .slide-card{padding:22px 16px 18px}
+    .slide-card.photo{min-height:380px}
+    .slide-btn{display:block;padding:13px 20px}
+    .counter{margin-left:8px}
+
+    .route-grid{grid-template-columns:1fr}
+    .route-card{padding:16px}
+    #routeList{max-height:380px}
+    .route-map iframe{height:300px}
     footer{padding:22px 16px;font-size:.85rem}
   }
   @media (max-width:380px){
     .hero-menu{grid-template-columns:1fr}
+    .hero-menu a:nth-child(5){grid-column:auto}
     .hero-text h1{letter-spacing:1px}
+    .s-arrow{width:38px;height:38px;font-size:1.05rem}
   }
   @media (min-width:1400px){
     .panel{padding:70px 0}
@@ -135,145 +300,170 @@
     <nav class="hero-menu">
       <a data-goto="hotels">Отели</a>
       <a data-goto="bays">Бухты</a>
-      <a data-goto="places">Места</a>
-      <a data-goto="oceanarium">Океанариум</a>
+      <a data-goto="places">Достопримечательности</a>
+      <a data-goto="oceanarium">Места для посещения</a>
+      <a data-goto="route">🗺 Маршрут</a>
     </nav>
   </div>
 </header>
 
-<!-- ================= ПАНЕЛЬ 1: ОТЕЛИ ================= -->
+<!-- ================= ПАНЕЛЬ 1: ОТЕЛИ (КАРУСЕЛЬ) ================= -->
 <section class="panel active" id="panel-hotels">
   <h2>🏨 Отели Владивостока</h2>
-  <p class="sub">Где остановиться во время отдыха</p>
-  <div class="cards">
-    <div class="card">
-      <h3>Hyatt Regency Vladivostok</h3>
-      <p class="stars">★★★★★</p>
-      <p>В самом центре, у Золотого моста. Панорамные виды на бухту Золотой Рог, бассейн и спа.</p>
-      <a class="phone" href="tel:+74232621234">📞 +7 (423) 262-12-34</a>
-    </div>
-    <div class="card">
-      <h3>Lotte Hotel Vladivostok</h3>
-      <p class="stars">★★★★★</p>
-      <p>Роскошный отель бизнес-класса: панорамный лифт, ресторан высокой кухни, отличные завтраки.</p>
-      <a class="phone" href="tel:+74232629000">📞 +7 (423) 262-90-00</a>
-    </div>
-    <div class="card">
-      <h3>AZIMUT Отель Владивосток</h3>
-      <p class="stars">★★★★</p>
-      <p>На берегу Амурского залива, в 10 минутах от центра. Из номеров видно мосты.</p>
-      <a class="phone" href="tel:+74232629800">📞 +7 (423) 262-98-00</a>
-    </div>
-    <div class="card">
-      <h3>Отель «Экватор»</h3>
-      <p class="stars">★★★★</p>
-      <p>Комфортные номера рядом с центром и ж/д вокзалом. Лучший вариант по цене и качеству.</p>
-      <a class="phone" href="tel:+74232490090">📞 +7 (423) 249-00-90</a>
-    </div>
-    <div class="card">
-      <h3>Отель «Версаль»</h3>
-      <p class="stars">★★★</p>
-      <p>Уютный отель в японском стиле на исторической Светланской улице.</p>
-      <a class="phone" href="tel:+74232608800">📞 +7 (423) 260-88-00</a>
-    </div>
-  </div>
-</section>
 
-<!-- ================= ПАНЕЛЬ 2: БУХТЫ ================= -->
-<section class="panel" id="panel-bays">
-  <h2>🌊 Бухты Владивостока</h2>
-  <p class="sub">Город окружён десятками бухт — вот самые известные</p>
-  <div class="cards">
-    <div class="card">
-      <h3>Бухта Золотой Рог</h3>
-      <p>Сердце города и главный порт. Над ней парит Золотой мост — визитная карточка Владивостока.</p>
-    </div>
-    <div class="card">
-      <h3>Амурский залив</h3>
-      <p>Лучшие закаты города, набережная Цесаревича и спуски к воде.</p>
-    </div>
-    <div class="card">
-      <h3>Бухта Диомид</h3>
-      <p>Судоремонтные доки и колоритные виды на пролив Босфор Восточный и Русский мост.</p>
-    </div>
-    <div class="card">
-      <h3>Бухта Улисс</h3>
-      <p>Тихое место с яхт-клубами и панорамой пролива Босфор Восточный.</p>
-    </div>
-    <div class="card">
-      <h3>Бухта Лазурная (Шамора)</h3>
-      <p>Самый известный пляж под Владивостоком: песок, дюны, серфинг.</p>
-    </div>
-    <div class="card">
-      <h3>Бухта Русская</h3>
-      <p>На острове Русский: бирюзовая вода, скалы — одно из красивейших мест побережья.</p>
-    </div>
-  </div>
-</section>
+  <div class="slider">
+    <button class="s-arrow" id="hotelPrev" title="Предыдущий отель">←</button>
 
-<!-- ================= ПАНЕЛЬ 3: МЕСТА ================= -->
-<section class="panel" id="panel-places">
-  <h2>📍 Что стоит посетить</h2>
-  <p class="sub">Главные точки на маршруте экскурсии</p>
-  <div class="cards">
-    <div class="card">
-      <h3>Золотой и Русский мосты</h3>
-      <p>Два символа города. Русский мост — самый длинный вантовый мост России.</p>
-    </div>
-    <div class="card">
-      <h3>Сопка Орлиное гнездо</h3>
-      <p>Лучшая обзорная площадка: весь город, мосты и залив как на ладони.</p>
-    </div>
-    <div class="card">
-      <h3>Корабельная набережная и С-56</h3>
-      <p>Мемориал боевой славы и легендарная подводная лодка-музей.</p>
-    </div>
-    <div class="card">
-      <h3>Светланская улица</h3>
-      <p>Старейшая улица города с дореволюционными особняками и видом на море.</p>
-    </div>
-    <div class="card">
-      <h3>Владивостокская крепость</h3>
-      <p>Музей-заповедник: настоящие форты и орудия начала XX века.</p>
-    </div>
-    <div class="card">
-      <h3>Токаревский маяк и фуникулёр</h3>
-      <p>Старейший маяк Приморья и подъём на сопку с панорамой Амурского залива.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ================= ПАНЕЛЬ 4: ОКЕАНАРИУМ ================= -->
-<section class="panel" id="panel-oceanarium">
-  <h2>🐠 Океанариум</h2>
-  <p class="sub">Крупнейший океанариум России — на острове Русский</p>
-  <a class="ocean-link" href="https://primocean.ru/" target="_blank" rel="noopener">
-    <div class="ocean-card">
-      <div class="emoji">🐋</div>
-      <div>
-        <h3 style="font-size:1.4rem;color:#fff">Приморский океанариум</h3>
-        <p>Дельфины, акулы, белухи и сотни видов обитателей Японского, Охотского и других морей. Нажмите, чтобы открыть официальный сайт — там билеты, расписание и афиша.</p>
-        <span class="ocean-btn">Открыть сайт primocean.ru →</span>
+    <div class="slide-card" id="hotelCard">
+      <img class="slide-bg" alt="Фото отеля">
+      <div class="slide-overlay">
+        <div class="s-emoji" id="hotelEmoji">🏨</div>
+        <span class="type" id="hotelType"></span>
+        <h3><a id="hotelLink" href="#" target="_blank" rel="noopener"><span id="hotelName"></span><span class="ext">↗</span></a></h3>
+        <p id="hotelDesc"></p>
+        <p class="price" id="hotelPrice"></p>
+        <a class="slide-btn" id="hotelBtn" href="#" target="_blank" rel="noopener">Открыть на Tutu.ru →</a>
       </div>
     </div>
-  </a>
+
+    <button class="s-arrow" id="hotelNext" title="Следующий отель">→</button>
+  </div>
+
+  <div class="slider-controls">
+    <div id="hotelDots" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"></div>
+    <span class="counter" id="hotelCounter">1 / 7</span>
+  </div>
+</section>
+
+<!-- ================= ПАНЕЛЬ 2: БУХТЫ (КАРУСЕЛЬ) ================= -->
+<section class="panel" id="panel-bays">
+  <h2>🌊 Бухты Владивостока</h2>
+
+  <div class="slider">
+    <button class="s-arrow" id="bayPrev" title="Предыдущая бухта">←</button>
+
+    <div class="slide-card" id="bayCard">
+      <img class="slide-bg" alt="Фото бухты">
+      <div class="slide-overlay">
+        <div class="s-emoji" id="bayEmoji">🌊</div>
+        <h3 id="bayName"></h3>
+        <p id="bayDesc"></p>
+        <a class="slide-btn" id="bayBtn" href="#" target="_blank" rel="noopener">Показать на карте →</a>
+      </div>
+    </div>
+
+    <button class="s-arrow" id="bayNext" title="Следующая бухта">→</button>
+  </div>
+
+  <div class="slider-controls">
+    <div id="bayDots" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"></div>
+    <span class="counter" id="bayCounter">1 / 8</span>
+  </div>
+</section>
+
+<!-- ================= ПАНЕЛЬ 3: ДОСТОПРИМЕЧАТЕЛЬНОСТИ (КАРУСЕЛЬ) ================= -->
+<section class="panel" id="panel-places">
+  <h2>📍 Достопримечательности</h2>
+
+  <div class="slider">
+    <button class="s-arrow" id="sightPrev" title="Предыдущее место">←</button>
+
+    <div class="slide-card" id="sightCard">
+      <img class="slide-bg" alt="Фото достопримечательности">
+      <div class="slide-overlay">
+        <div class="s-emoji" id="sightEmoji">📍</div>
+        <h3 id="sightName"></h3>
+        <p id="sightDesc"></p>
+        <a class="slide-btn" id="sightBtn" href="#" target="_blank" rel="noopener">Показать на карте →</a>
+      </div>
+    </div>
+
+    <button class="s-arrow" id="sightNext" title="Следующее место">→</button>
+  </div>
+
+  <div class="slider-controls">
+    <div id="sightDots" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"></div>
+    <span class="counter" id="sightCounter">1 / 10</span>
+  </div>
+</section>
+
+<!-- ================= ПАНЕЛЬ 4: МЕСТА ДЛЯ ПОСЕЩЕНИЯ (КАРУСЕЛЬ) ================= -->
+<section class="panel" id="panel-oceanarium">
+  <h2>🐠 Места для посещения</h2>
+
+  <div class="slider">
+    <button class="s-arrow" id="placePrev" title="Предыдущее место">←</button>
+
+    <div class="slide-card" id="placeCard">
+      <img class="slide-bg" alt="Фото места">
+      <div class="slide-overlay">
+        <div class="s-emoji" id="placeEmoji">🐋</div>
+        <h3 id="placeName"></h3>
+        <p id="placeDesc"></p>
+        <a class="slide-btn" id="placeBtn" href="#" target="_blank" rel="noopener">Открыть сайт →</a>
+      </div>
+    </div>
+
+    <button class="s-arrow" id="placeNext" title="Следующее место">→</button>
+  </div>
+
+  <div class="slider-controls">
+    <div id="placeDots" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"></div>
+    <span class="counter" id="placeCounter">1 / 6</span>
+  </div>
+</section>
+
+<!-- ================= ПАНЕЛЬ 5: МАРШРУТ ЭКСКУРСИИ (БЕЗ ИЗМЕНЕНИЙ) ================= -->
+<section class="panel" id="panel-route">
+  <h2>🗺 Маршрут экскурсии</h2>
+  <p class="sub">Отметьте места галочками — первая отметка станет стартом, последняя финишем. Или возьмите готовый маршрут.</p>
+
+  <div class="route-grid">
+    <div class="route-card">
+      <div class="route-presets">
+        <button data-preset="classic">🏙 Классика за день</button>
+        <button data-preset="family">👨‍👩‍👧 Семейный</button>
+        <button data-preset="nature">🌲 Природный</button>
+        <button data-preset="reset">✖ Сбросить</button>
+      </div>
+
+      <div id="routeList"></div>
+    </div>
+
+    <div class="route-side">
+      <div class="route-count" id="routeCount">Выбрано: 0</div>
+
+      <div class="route-map">
+        <p class="map-status" id="mapStatus">🗺 На карте показан Владивосток. Отметьте 2 и более мест — маршрут появится на карте.</p>
+        <iframe id="routeMapFrame" title="Интерактивная карта маршрута — Яндекс Карты"
+                src="https://yandex.ru/map-widget/v1/?ll=131.90%2C43.11&z=12"
+                loading="lazy" allowfullscreen></iframe>
+      </div>
+
+      <a class="map-btn ya off" id="yaBtn" href="#" target="_blank" rel="noopener">🟡 Открыть в Яндекс Картах</a>
+      <a class="map-btn gg off" id="ggBtn" href="#" target="_blank" rel="noopener">🔵 Открыть в Google Картах</a>
+      <p class="route-note">
+        💡 Карта маршрута встроена прямо в страницу и обновляется сама при выборе мест.
+        Кнопки ниже открывают готовый маршрут в Яндекс или Google Картах в новой вкладке.
+        Порядок маршрута = порядок мест в списке сверху вниз.
+      </p>
+      <p class="route-note">
+        🚗 Маршрут строится по автомобильным дорогам — это стандартный режим обеих карт.
+      </p>
+      <p class="route-note">
+        ⏰ Совет: сафари-парк и пляж Шамора находятся за городом — закладывайте на дорогу 1–1,5 часа.
+      </p>
+    </div>
+  </div>
 </section>
 
 <footer>
-  Экскурсия по Владивостоку · Сделано с любовью студентом ВВГУ 🌉
+  Экскурсия по Владивостоку · Сделано с любовью студентом ВВГУ
 </footer>
 
 <script>
-  /* ============================================================
-     ФОТО ГЛАВНОГО ЭКРАНА
-     1) Если рядом с index.html лежит hero.jpg — оно подставится само.
-     2) Если файла нет — можно вставить прямую ссылку на фото
-        из интернета в кавычки ниже (должна открываться как чистая
-        картинка в новой вкладке). Пример поиска: Wikimedia Commons,
-        запрос «Zolotoy Bridge Vladivostok».
-  ============================================================ */
-  const REMOTE_HERO_URL = ""; // <-- сюда вставьте ссылку, например "https://...jpg"
-
+  /* ===== ФОТО ГЛАВНОГО ЭКРАНА ===== */
+  const REMOTE_HERO_URL = "";
   const hero = document.querySelector('.hero');
   const test = new Image();
   test.onload = () => { hero.style.backgroundImage = 'url("hero.jpg")'; };
@@ -282,9 +472,362 @@
   };
   test.src = 'hero.jpg';
 
+  /* ============================================================
+     УНИВЕРСАЛЬНАЯ КАРУСЕЛЬ
+     Если у слайда есть фото — оно становится фоном с затемнением,
+     текст ложится поверх. Если фото нет — белая карточка.
+  ============================================================ */
+  function makeSlider({data, card, prev, next, dots, counter, apply}){
+    let idx = 0;
+    const bg = card.querySelector('.slide-bg');
+
+    bg.onload  = () => card.classList.add('photo');
+    bg.onerror = () => card.classList.remove('photo');
+
+    data.forEach((p, i) => {
+      const d = document.createElement('button');
+      d.className = 'dot';
+      d.title = (i + 1) + ' — ' + p.name;
+      d.addEventListener('click', () => show(i));
+      dots.appendChild(d);
+    });
+
+    function show(i, dir = 1){
+      idx = (i + data.length) % data.length;
+      const p = data[idx];
+      card.classList.remove('photo');
+      apply(p);
+      bg.alt = p.name;
+      bg.src = p.img;
+      counter.textContent = (idx + 1) + ' / ' + data.length;
+      card.style.setProperty('--dir', (dir > 0 ? '20px' : '-20px'));
+      card.style.animation = 'none';
+      void card.offsetWidth;
+      card.style.animation = '';
+      [...dots.children].forEach((d, k) => d.classList.toggle('active', k === idx));
+    }
+
+    prev.addEventListener('click', () => show(idx - 1, -1));
+    next.addEventListener('click', () => show(idx + 1,  1));
+    show(0);
+    return { prev: () => show(idx - 1, -1), next: () => show(idx + 1, 1) };
+  }
+
+  const mapUrl = q => 'https://yandex.ru/maps/?text=' + encodeURIComponent(q);
+
+  /* ===== ДАННЫЕ: ОТЕЛИ ===== */
+  const hotels = [
+    { emoji:"🛋", type:"🛋 Мини-отель", name:"«Диван и чемодан» (ул. Тухачевского, 49/1)",
+      desc:"Мини-отель домашнего формата: простые и чистые номера по очень низкой цене. Хороший вариант для короткой остановки в путешествии.",
+      price:"от ≈ 2 800 ₽ / ночь",
+      url:"https://hotel.tutu.ru/h_divan_i_chemodan_na_ulitse_tukhachevskogo_491/?check_in=2026-10-04&check_out=2026-10-05&geo_name=Владивосток&geo_type=locality",
+      img:"hotel1.jpg" },
+    { emoji:"🎒", type:"🎒 Хостел", name:"Хостел «Город and More»",
+      desc:"Уютный хостел с дружеской атмосферой: общая кухня, зона отдыха, близко к центру. Самый экономный способ жить в городе.",
+      price:"от ≈ 3 100 ₽ / ночь",
+      url:"https://hotel.tutu.ru/h_khostel_gorod_and_more/?check_in=2026-10-04&check_out=2026-10-05&geo_name=Владивосток&geo_type=locality",
+      img:"hotel2.jpg" },
+    { emoji:"🚀", type:"🚀 Капсульный отель", name:"Капсульный отель Deep Hotel",
+      desc:"Современный формат: спальные капсулы с личным светом и розетками, душевые и общая зона. Идеален, чтобы выспаться за разумные деньги.",
+      price:"от ≈ 5 000 ₽ / ночь",
+      url:"https://hotel.tutu.ru/h_kapsulny_otel_deep_hotel/?check_in=2026-10-04&check_out=2026-10-05&geo_name=Владивосток&geo_type=locality",
+      img:"hotel3.jpg" },
+    { emoji:"🏨", type:"🏨 Отель", name:"Отель «Гавань»",
+      desc:"Отель среднего ценового сегмента: комфортабельные номера для спокойного отдыха после насыщенного экскурсионного дня.",
+      price:"от ≈ 5 700 ₽ / ночь",
+      url:"https://hotel.tutu.ru/h_otel_gavan_vladivostok/?check_in=2026-10-04&check_out=2026-10-05&geo_name=Владивосток&geo_type=locality",
+      img:"hotel4.jpg" },
+    { emoji:"🏙", type:"🏙 Апарт-отель", name:"«Холидей» (ул. Светланская, 11)",
+      desc:"Жильё на главной исторической улице города: кафе и достопримечательности рядом, до моря рукой подать.",
+      price:"от ≈ 7 800 ₽ / ночь",
+      url:"https://hotel.tutu.ru/h_kholidey_ulitsa_svetlanskaya_11_vladivostok/?check_in=2026-10-04&check_out=2026-10-05&geo_name=Владивосток&geo_type=locality",
+      img:"hotel5.jpg" },
+    { emoji:"🌊", type:"🌊 Отель с видом на море", name:"Отель «Kinney Sea View»",
+      desc:"Номера с видом на море — как и обещает название. Вариант для тех, кто хочет просыпаться с панорамой залива за окном.",
+      price:"от ≈ 9 100 ₽ / ночь",
+      url:"https://hotel.tutu.ru/h_otel_kinney_sea_view_vladivostok/?check_in=2026-10-04&check_out=2026-10-05&geo_name=Владивосток&geo_type=locality",
+      img:"hotel6.jpg" },
+    { emoji:"🏨", type:"🏨 Сетевой отель", name:"AZIMUT Сити Владивосток",
+      desc:"Отель известной российской сети AZIMUT Hotels: единый стандарт качества, современные номера, завтраки. Самый комфортный вариант подборки.",
+      price:"от ≈ 11 500 ₽ / ночь",
+      url:"https://hotel.tutu.ru/h_azimut_siti_vladivostok/?check_in=2026-10-04&check_out=2026-10-05&geo_name=Владивосток&geo_type=locality",
+      img:"hotel7.jpg" }
+  ];
+
+  const hotelS = makeSlider({
+    data: hotels,
+    card: document.getElementById('hotelCard'),
+    prev: document.getElementById('hotelPrev'),
+    next: document.getElementById('hotelNext'),
+    dots: document.getElementById('hotelDots'),
+    counter: document.getElementById('hotelCounter'),
+    apply: p => {
+      document.getElementById('hotelEmoji').textContent = p.emoji;
+      document.getElementById('hotelType').textContent  = p.type;
+      document.getElementById('hotelName').textContent  = p.name;
+      document.getElementById('hotelLink').href         = p.url;
+      document.getElementById('hotelDesc').textContent  = p.desc;
+      document.getElementById('hotelPrice').textContent = p.price;
+      document.getElementById('hotelBtn').href          = p.url;
+    }
+  });
+
+  /* ===== ДАННЫЕ: БУХТЫ ===== */
+  const bays = [
+    { emoji:"🚢", name:"Бухта Золотой Рог",
+      desc:"Сердце города и главный порт. Над ней парит Золотой мост — визитная карточка Владивостока.",
+      q:"Владивосток, бухта Золотой Рог", img:"bay1.jpg" },
+    { emoji:"🛳", name:"Бухта Диомид",
+      desc:"Судоремонтные доки и колоритные виды на пролив Босфор Восточный и Русский мост.",
+      q:"Владивосток, бухта Диомид", img:"bay3.jpg" },
+    { emoji:"⛵", name:"Бухта Улисс",
+      desc:"Тихое место с яхт-клубами и панорамой пролива Босфор Восточный.",
+      q:"Владивосток, бухта Улисс", img:"bay4.jpg" },
+    { emoji:"🏖", name:"Бухта Лазурная (Шамора)",
+      desc:"Самый известный пляж под Владивостоком: песок, дюны, серфинг.",
+      q:"бухта Лазурная, Владивосток", img:"bay5.jpg" },
+    { emoji:"🏝", name:"Бухта Русская",
+      desc:"На острове Русский: бирюзовая вода, скалы — одно из красивейших мест побережья.",
+      q:"бухта Русская, остров Русский", img:"bay6.jpg" },
+    { emoji:"🏊", name:"Бухта Соболь (о. Русский)",
+      desc:"Тёплая летняя вода и песчаный пляж с плавным входом в море — одно из самых удобных мест для купания рядом с городом.",
+      q:"пляж Соболь, остров Русский", img:"bay7.jpg" },
+    { emoji:"🤿", name:"Бухта Тельковского (о. Русский)",
+      desc:"Чистейшая бирюзовая вода, белые скалы и диковатый пляж: купание и снорклинг среди природы — без толп и городской суеты.",
+      q:"бухта Тельковского, остров Русский", img:"bay8.jpg" },
+    { emoji:"🌅", name:"Бухта Патрокл",
+      desc:"Самый доступный пляж в черте города: ровный песчаный вход в воду, прокат лежаков и закаты над Уссурийским заливом.",
+      q:"бухта Патрокл, Владивосток", img:"bay9.jpg" }
+  ];
+
+  const bayS = makeSlider({
+    data: bays,
+    card: document.getElementById('bayCard'),
+    prev: document.getElementById('bayPrev'),
+    next: document.getElementById('bayNext'),
+    dots: document.getElementById('bayDots'),
+    counter: document.getElementById('bayCounter'),
+    apply: p => {
+      document.getElementById('bayEmoji').textContent = p.emoji;
+      document.getElementById('bayName').textContent  = p.name;
+      document.getElementById('bayDesc').textContent  = p.desc;
+      document.getElementById('bayBtn').href          = mapUrl(p.q);
+    }
+  });
+
+  /* ===== ДАННЫЕ: ДОСТОПРИМЕЧАТЕЛЬНОСТИ ===== */
+  const sights = [
+    { emoji:"🌉", name:"Золотой и Русский мосты",
+      desc:"Два символа города. Русский мост — самый длинный вантовый мост России.",
+      q:"Русский мост, Владивосток", img:"sight1.jpg" },
+    { emoji:"🌄", name:"Сопка Орлиное гнездо",
+      desc:"Лучшая обзорная площадка: весь город, мосты и залив как на ладони.",
+      q:"Владивосток, сопка Орлиное гнездо", img:"sight2.jpg" },
+    { emoji:"⚓", name:"Корабельная набережная и С-56",
+      desc:"Мемориал боевой славы и легендарная подводная лодка-музей.",
+      q:"Владивосток, Корабельная набережная", img:"sight3.jpg" },
+    { emoji:"🏛", name:"Светланская улица",
+      desc:"Старейшая улица города с дореволюционными особняками и видом на море.",
+      q:"Владивосток, улица Светланская", img:"sight4.jpg" },
+    { emoji:"🏰", name:"Владивостокская крепость",
+      desc:"Музей-заповедник: настоящие форты и орудия начала XX века.",
+      q:"музей Владивостокская крепость", img:"sight5.jpg" },
+    { emoji:"🗼", name:"Токаревский маяк и фуникулёр",
+      desc:"Старейший маяк Приморья и подъём на сопку с панорамой Амурского залива.",
+      q:"Владивосток, Токаревский маяк", img:"sight6.jpg" },
+    { emoji:"⛩", name:"Триумфальная арка цесаревича Николая",
+      desc:"Никольские ворота 1891 года, возведённые к приезду во Владивосток цесаревича Николая Александровича и воссозданные в 2003 году.",
+      q:"Триумфальная арка цесаревича Николая, Владивосток", img:"sight7.jpg" },
+    { emoji:"⛰", name:"Сопка Бурачка (Цветные скалы)",
+      desc:"«Марсианский» пейзаж в черте города: розово-оранжевые скалы старого карьера, поляны на вершинах и панорама северного Владивостока. Одна из самых популярных фотолокаций.",
+      q:"сопка Бурачка, Владивосток", img:"sight8.jpg" },
+    { emoji:"🎖", name:"Ворошиловская батарея (о. Русский)",
+      desc:"Музей-форт 1930-х годов: гигантские башенные орудия, подземные галереи и смотровые площадки с видом на пролив Босфор Восточный.",
+      q:"Ворошиловская батарея, остров Русский", img:"sight9.jpg" },
+    { emoji:"⛲", name:"Набережная Цесаревича (Спортивная гавань)",
+      desc:"Современная морская набережная: фонтан «Морская звезда», яхт-причалы, уличные музыканты и одни из лучших закатов над Амурским заливом.",
+      q:"Набережная Цесаревича, Владивосток", img:"sight10.jpg" }
+  ];
+
+  const sightS = makeSlider({
+    data: sights,
+    card: document.getElementById('sightCard'),
+    prev: document.getElementById('sightPrev'),
+    next: document.getElementById('sightNext'),
+    dots: document.getElementById('sightDots'),
+    counter: document.getElementById('sightCounter'),
+    apply: p => {
+      document.getElementById('sightEmoji').textContent = p.emoji;
+      document.getElementById('sightName').textContent  = p.name;
+      document.getElementById('sightDesc').textContent  = p.desc;
+      document.getElementById('sightBtn').href          = mapUrl(p.q);
+    }
+  });
+
+  /* ===== ДАННЫЕ: МЕСТА ДЛЯ ПОСЕЩЕНИЯ ===== */
+  const places = [
+    { emoji:"🐋", name:"Приморский океанариум",
+      desc:"Крупнейший океанариум России на острове Русский: подводный тоннель сквозь аквариум с рифами, дельфины, акулы и белухи. Билеты, расписание и афиша — на официальном сайте.",
+      url:"https://primocean.ru/", img:"place1.jpg" },
+    { emoji:"🌿", name:"Ботанический сад-институт ДВО РАН",
+      desc:"Живой заповедник прямо в городе: сотни видов растений Дальнего Востока, японский сад, беседки и прогулочные маршруты в любой сезон.",
+      url:"http://botsad.ru/", img:"place2.jpg" },
+    { emoji:"💦", name:"Аквапарк «Лесная поляна»",
+      desc:"Водный отдых для всей семьи: горки, бассейны и детские зоны. Любимое место спасения от жары летними днями. Режим работы и цены — на сайте.",
+      url:"https://primcult.ru/places/505/akvapark-lesnaya-polyana", img:"place3.jpg" },
+    { emoji:"🎠", name:"Парк развлечений «Карусель»",
+      desc:"Аттракционы для детей и взрослых: карусели, качели, батуты и сезонные праздники. Отличный вариант семейного выходного.",
+      url:"https://karuselpark.ru/", img:"place4.jpg" },
+    { emoji:"🦁", name:"Зоопарк Владивостока",
+      desc:"Животные Дальнего Востока и со всего мира, экскурсии и кормления — один из любимых семейных маршрутов в городе.",
+      url:"https://zoopark-vl.ru/", img:"place5.jpg" },
+    { emoji:"🐯", name:"Приморский сафари-парк",
+      desc:"Амурские тигры, дальневосточные леопарды, медведи и копытные в просторных вольерах. Парк известен спасением и реабилитацией диких животных.",
+      url:"https://safaripark25.ru/", img:"place6.jpg" },
+    { emoji:"🏺", name:"Музей истории Дальнего Востока им. В. К. Арсеньева",
+      desc:"Главный музей региона: природа и народы Приморья, экспедиции В. К. Арсеньева, крупнейшие коллекции истории Дальнего Востока.",
+      url:"https://arseniev.org/", img:"place7.jpg" },
+    { emoji:"🎨", name:"Приморская государственная картинная галерея",
+      desc:"Крупнейшее собрание живописи в крае: русская классика, иконопись и работы дальневосточных художников в особняке XIX века.",
+      url:"https://yandex.ru/maps/?text=%D0%9F%D1%80%D0%B8%D0%BC%D0%BE%D1%80%D1%81%D0%BA%D0%B0%D1%8F%20%D0%B3%D0%BE%D1%81%D1%83%D0%B4%D0%B0%D1%80%D1%81%D1%82%D0%B2%D0%B5%D0%BD%D0%BD%D0%B0%D1%8F%20%D0%BA%D0%B0%D1%80%D1%82%D0%B8%D0%BD%D0%BD%D0%B0%D1%8F%20%D0%B3%D0%B0%D0%BB%D0%B5%D1%80%D0%B5%D1%8F", img:"place8.jpg" }
+  ];
+
+  const placeS = makeSlider({
+    data: places,
+    card: document.getElementById('placeCard'),
+    prev: document.getElementById('placePrev'),
+    next: document.getElementById('placeNext'),
+    dots: document.getElementById('placeDots'),
+    counter: document.getElementById('placeCounter'),
+    apply: p => {
+      document.getElementById('placeEmoji').textContent = p.emoji;
+      document.getElementById('placeName').textContent  = p.name;
+      document.getElementById('placeDesc').textContent  = p.desc;
+      document.getElementById('placeBtn').href          = p.url;
+    }
+  });
+
+  /* ===== Карусели по разделам (для клавиатуры и свайпов) ===== */
+  const sliders = { hotels: hotelS, bays: bayS, places: sightS, oceanarium: placeS };
+
+  /* ============================================================
+     КОНСТРУКТОР МАРШРУТА (Яндекс / Google Карты)
+  ============================================================ */
+  const routePoints = [
+    { key:"s56",       emoji:"⚓", name:"Корабельная набережная и С-56",            q:"Владивосток, Корабельная набережная",            ll:"43.1146,131.8847" },
+    { key:"svetl",     emoji:"🏛", name:"Светланская улица",                        q:"Владивосток, улица Светланская",                 ll:"43.1154,131.8876" },
+    { key:"goldrog",   emoji:"🚢", name:"Бухта Золотой Рог",                        q:"Владивосток, бухта Золотой Рог",                 ll:"43.0974,131.8774" },
+    { key:"gold",      emoji:"🌉", name:"Золотой мост",                             q:"Владивосток, Золотой мост",                      ll:"43.1092,131.8964" },
+    { key:"funik",     emoji:"🚡", name:"Фуникулёр",                                q:"Владивосток, фуникулёр",                         ll:"43.1174,131.9000" },
+    { key:"eagle",     emoji:"🌄", name:"Сопка Орлиное гнездо (смотровая)",         q:"Владивосток, сопка Орлиное гнездо",              ll:"43.1224,131.8991" },
+    { key:"fort",      emoji:"🏰", name:"Владивостокская крепость",                 q:"музей Владивостокская крепость",                 ll:"43.1225,131.8765" },
+    { key:"mayak",     emoji:"🗼", name:"Токаревский маяк",                         q:"Владивосток, Токаревский маяк",                  ll:"43.0795,131.8419" },
+    { key:"diomid",    emoji:"🛳", name:"Бухта Диомид",                             q:"Владивосток, бухта Диомид",                      ll:"43.0879,131.8889" },
+    { key:"uliss",     emoji:"⛵", name:"Бухта Улисс",                              q:"Владивосток, бухта Улисс",                       ll:"43.0760,131.9154" },
+    { key:"rusbridge", emoji:"🌉", name:"Русский мост",                             q:"Русский мост, Владивосток",                      ll:"43.0654,131.9109" },
+    { key:"russbay",   emoji:"🏝", name:"Бухта Русская (о. Русский)",               q:"бухта Русская, остров Русский",                  ll:"42.9760,131.9560" },
+    { key:"ocean",     emoji:"🐋", name:"Приморский океанариум (о. Русский)",       q:"Приморский океанариум",                          ll:"43.0049,131.9254" },
+    { key:"botsad",    emoji:"🌿", name:"Ботанический сад ДВО РАН",                 q:"Ботанический сад ДВО РАН, Владивосток",          ll:"43.2128,131.9837" },
+    { key:"karusel",   emoji:"🎠", name:"Парк развлечений «Карусель»",              q:"парк Карусель, Владивосток",                     ll:"43.1205,131.8764" },
+    { key:"aqua",      emoji:"💦", name:"Аквапарк «Лесная поляна»",                 q:"аквапарк Лесная поляна, Владивосток",            ll:"43.2547,132.0326" },
+    { key:"zoo",       emoji:"🦁", name:"Зоопарк Владивостока (Садгород)",          q:"Владивостокский зоопарк",                        ll:"43.2602,132.0412" },
+    { key:"safari",    emoji:"🐯", name:"Приморский сафари-парк (за городом)",      q:"Приморский сафари-парк",                         ll:"43.3253,132.4034" },
+    { key:"shamora",   emoji:"🏖", name:"Бухта Лазурная (пляж Шамора)",             q:"бухта Лазурная, Владивосток",                    ll:"43.1951,132.1111" }
+  ];
+
+  const presets = {
+    classic: ["s56","svetl","gold","funik","eagle","mayak"],
+    family:  ["ocean","karusel","aqua","zoo"],
+    nature:  ["botsad","zoo","safari","shamora"]
+  };
+
+  const rList  = document.getElementById('routeList');
+  const rCount = document.getElementById('routeCount');
+  const yaBtn  = document.getElementById('yaBtn');
+  const ggBtn  = document.getElementById('ggBtn');
+
+  routePoints.forEach(p => {
+    const lab = document.createElement('label');
+    lab.className = 'route-item';
+    lab.innerHTML =
+      `<input type="checkbox" value="${p.key}">` +
+      `<span class="r-emoji">${p.emoji}</span>` +
+      `<span>${p.name}</span>`;
+    rList.appendChild(lab);
+  });
+
+  const boxes   = () => [...rList.querySelectorAll('input')];
+  const checked = () => boxes().filter(b => b.checked).map(b => routePoints.find(p => p.key === b.value));
+
+  function refreshRoute(){
+    const pts = checked();
+    const n   = pts.length;
+    rCount.textContent = 'Выбрано: ' + n;
+    yaBtn.classList.toggle('off', n < 2);
+    ggBtn.classList.toggle('off', n < 2);
+
+    /* Ссылки формируются сразу при изменении выбора, а не в момент клика.
+       Исправление ошибки: раньше при открытии ссылки в новой вкладке
+       (или долгом нажатии на телефоне) открывалась пустая страница «#». */
+    if (n >= 2){
+      const seq = pts.map(p => p.ext || p.ll);
+      yaBtn.href = 'https://yandex.ru/maps/?rtext=' +
+        encodeURIComponent(seq.join('~')) + '&rtt=auto';
+
+      let u = 'https://www.google.com/maps/dir/?api=1' +
+        '&origin='      + encodeURIComponent(seq[0]) +
+        '&destination=' + encodeURIComponent(seq[seq.length - 1]) +
+        '&travelmode=driving';
+      if (seq.length > 2) u += '&waypoints=' + encodeURIComponent(seq.slice(1, -1).join('|'));
+      ggBtn.href = u;
+    } else {
+      yaBtn.href = '#';
+      ggBtn.href = '#';
+    }
+
+    updateMap(pts);
+  }
+  rList.addEventListener('change', refreshRoute);
+
+  /* ===== ВСТРОЕННАЯ КАРТА МАРШРУТА (виджет Яндекс Карт, без API-ключа) =====
+     rtext — точки маршрута в формате «широта,долгота», разделённые «~».
+     Виджет сам строит автомобильный маршрут и подбирает масштаб. */
+  const mapFrame  = document.getElementById('routeMapFrame');
+  const mapStatus = document.getElementById('mapStatus');
+  const MAP_HOME  = 'https://yandex.ru/map-widget/v1/?ll=131.90%2C43.11&z=12';
+  let mapTimer = null;
+  let mapMode  = 'home';
+
+  function updateMap(pts){
+    clearTimeout(mapTimer);
+    mapTimer = setTimeout(() => {
+      if (pts.length >= 2){
+        mapFrame.src = 'https://yandex.ru/map-widget/v1/?rtext=' +
+          encodeURIComponent(pts.map(p => p.ll).join('~')) + '&rtt=auto';
+        mapMode = 'route';
+        mapStatus.textContent =
+          '🗺 На карте построен автомобильный маршрут через ' + pts.length +
+          ' точек: первая отметка — старт, последняя — финиш.';
+      } else if (mapMode !== 'home'){
+        mapFrame.src = MAP_HOME;
+        mapMode = 'home';
+        mapStatus.textContent =
+          '🗺 На карте показан Владивосток. Отметьте 2 и более мест — маршрут появится на карте.';
+      }
+    }, 350);
+  }
+
+  document.querySelectorAll('[data-preset]').forEach(b => {
+    b.addEventListener('click', () => {
+      const set = b.dataset.preset === 'reset' ? [] : presets[b.dataset.preset];
+      boxes().forEach(bx => bx.checked = set.includes(bx.value));
+      refreshRoute();
+    });
+  });
+
   /* ===== Переключение разделов ===== */
   const panels = [...document.querySelectorAll('.panel')];
-  const order  = ['hotels','bays','places','oceanarium'];
+  const order  = ['hotels','bays','places','oceanarium','route'];
   let current = 0;
 
   function show(i, scroll = true){
@@ -295,18 +838,18 @@
     }
   }
 
-  // Кнопки меню на главном экране
   document.querySelectorAll('.hero-menu a[data-goto]').forEach(a => {
     a.addEventListener('click', () => show(order.indexOf(a.dataset.goto)));
   });
 
-  // ПК: стрелки на клавиатуре
+  // ПК: стрелки — в карусельных разделах листают карусель, в «Маршруте» — разделы
   document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowLeft')  show(current - 1);
-    if (e.key === 'ArrowRight') show(current + 1);
+    const s = sliders[order[current]];
+    if (e.key === 'ArrowLeft'){  s ? s.prev() : show(current - 1); }
+    if (e.key === 'ArrowRight'){ s ? s.next() : show(current + 1); }
   });
 
-  // Телефон: свайп влево/вправо
+  // Телефон: свайп по карусели — листает её, свайп вне карусели — переключает разделы
   let startX = 0, startY = 0;
   document.addEventListener('touchstart', e => {
     startX = e.changedTouches[0].clientX;
@@ -315,9 +858,17 @@
   document.addEventListener('touchend', e => {
     const dx = e.changedTouches[0].clientX - startX;
     const dy = e.changedTouches[0].clientY - startY;
-    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5){
-      show(current + (dx < 0 ? 1 : -1));
+    if (Math.abs(dx) <= 70 || Math.abs(dx) <= Math.abs(dy) * 1.5) return;
+
+    const sliderEl = e.target.closest && e.target.closest('.slider');
+    if (sliderEl){
+      const sec = sliderEl.closest('.panel');
+      if (sec){
+        const s = sliders[sec.id.replace('panel-','')];
+        if (s){ dx < 0 ? s.next() : s.prev(); return; }
+      }
     }
+    show(current + (dx < 0 ? 1 : -1));
   }, {passive:true});
 
   // Открытие нужного раздела по ссылке вида index.html#bays
