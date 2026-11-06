@@ -41,6 +41,15 @@
       «Достопримечательности» как дубль Токаревского маяка (карточка
       «Токаревский маяк и фуникулёр» и точка маршрута остаются);
       счётчик карусели обновлён: 11 → 10.
+  Версия 7 — изменения по заданию:
+  11) в конструктор маршрута добавлен блок «Моё местонахождение»:
+      кнопка определяет координаты геолокацией браузера и показывает вас
+      на встроенной карте отдельной меткой (пока места не выбраны), а
+      при включённой галочке «Начинать маршрут от моего местонахождения»
+      ваша точка встаёт ПЕРВОЙ в маршрут — и во встроенной карте, и в
+      ссылках «Открыть в Яндекс / Google Картах» путь начинается от вас;
+      при ошибке геолокации выводится понятная подсказка, а если вы
+      далеко от города — расстояние до Владивостока.
   ============================================================
 -->
 <style>
@@ -226,6 +235,27 @@
   .route-item input{width:18px;height:18px;accent-color:var(--sea);flex:none;cursor:pointer}
   .route-item .r-emoji{font-size:1.25rem;flex:none}
   .route-item span:last-child{font-size:.97rem}
+
+  /* ===== МОЁ МЕСТОНАХОЖДЕНИЕ (геолокация) ===== */
+  .geo-box{
+    margin:0 0 16px;padding:14px 16px 12px;
+    background:#eef6fb;border:1.5px dashed var(--sea-light);
+    border-radius:14px;
+  }
+  .geo-btn{
+    font-family:inherit;font-size:.92rem;font-weight:700;cursor:pointer;
+    padding:10px 20px;border-radius:22px;border:none;
+    background:var(--sea);color:#fff;transition:.25s;
+  }
+  .geo-btn:hover{background:var(--accent);color:#143246;transform:scale(1.03)}
+  .geo-btn:disabled{opacity:.55;cursor:wait;transform:none}
+  .geo-toggle{
+    display:flex;align-items:center;gap:10px;margin-top:10px;
+    cursor:pointer;font-size:.95rem;font-weight:600;
+  }
+  .geo-toggle[hidden]{display:none}
+  .geo-toggle input{width:18px;height:18px;accent-color:var(--sea);cursor:pointer;flex:none}
+  .geo-status{font-size:.85rem;color:#41545f;margin-top:8px;line-height:1.45}
 
   .route-side .route-count{
     font-weight:700;color:var(--sea);margin-bottom:12px;font-size:1.05rem;
@@ -413,13 +443,22 @@
   </div>
 </section>
 
-<!-- ================= ПАНЕЛЬ 5: МАРШРУТ ЭКСКУРСИИ (БЕЗ ИЗМЕНЕНИЙ) ================= -->
+<!-- ================= ПАНЕЛЬ 5: МАРШРУТ ЭКСКУРСИИ (+ МОЁ МЕСТОНАХОЖДЕНИЕ) ================= -->
 <section class="panel" id="panel-route">
   <h2>🗺 Маршрут экскурсии</h2>
-  <p class="sub">Отметьте места галочками — первая отметка станет стартом, последняя финишем. Или возьмите готовый маршрут.</p>
+  <p class="sub">Отметьте места галочками — первая отметка станет стартом, последняя финишем. Можно начать маршрут от точки, где вы находитесь, — включите «Моё местонахождение». Или возьмите готовый маршрут.</p>
 
   <div class="route-grid">
     <div class="route-card">
+      <div class="geo-box" id="geoBox">
+        <button type="button" class="geo-btn" id="geoBtn">📍 Определить моё местонахождение</button>
+        <label class="geo-toggle" id="geoToggle" hidden>
+          <input type="checkbox" id="geoCheck">
+          <span>Начинать маршрут от моего местонахождения</span>
+        </label>
+        <p class="geo-status" id="geoStatus">Нажмите кнопку и разрешите браузеру определить, где вы: на карте появится ваша метка, а маршрут будет строиться от этой точки.</p>
+      </div>
+
       <div class="route-presets">
         <button data-preset="classic">🏙 Классика за день</button>
         <button data-preset="family">👨‍👩‍👧 Семейный</button>
@@ -445,7 +484,8 @@
       <p class="route-note">
         💡 Карта маршрута встроена прямо в страницу и обновляется сама при выборе мест.
         Кнопки ниже открывают готовый маршрут в Яндекс или Google Картах в новой вкладке.
-        Порядок маршрута = порядок мест в списке сверху вниз.
+        Порядок маршрута = порядок мест в списке сверху вниз; если включено
+        «Моё местонахождение» — путь стартует от вас.
       </p>
       <p class="route-note">
         🚗 Маршрут строится по автомобильным дорогам — это стандартный режим обеих карт.
@@ -579,25 +619,25 @@
       q:"Владивосток, бухта Золотой Рог", img:"bay1.jpg" },
     { emoji:"🛳", name:"Бухта Диомид",
       desc:"Судоремонтные доки и колоритные виды на пролив Босфор Восточный и Русский мост.",
-      q:"Владивосток, бухта Диомид", img:"bay3.jpg" },
+      q:"Владивосток, бухта Диомид", img:"bay2.jpg" },
     { emoji:"⛵", name:"Бухта Улисс",
       desc:"Тихое место с яхт-клубами и панорамой пролива Босфор Восточный.",
-      q:"Владивосток, бухта Улисс", img:"bay4.jpg" },
+      q:"Владивосток, бухта Улисс", img:"bay3.jpg" },
     { emoji:"🏖", name:"Бухта Лазурная (Шамора)",
       desc:"Самый известный пляж под Владивостоком: песок, дюны, серфинг.",
-      q:"бухта Лазурная, Владивосток", img:"bay5.jpg" },
+      q:"бухта Лазурная, Владивосток", img:"bay4.jpg" },
     { emoji:"🏝", name:"Бухта Русская",
       desc:"На острове Русский: бирюзовая вода, скалы — одно из красивейших мест побережья.",
-      q:"бухта Русская, остров Русский", img:"bay6.jpg" },
+      q:"бухта Русская, остров Русский", img:"bay5.jpg" },
     { emoji:"🏊", name:"Бухта Соболь (о. Русский)",
       desc:"Тёплая летняя вода и песчаный пляж с плавным входом в море — одно из самых удобных мест для купания рядом с городом.",
-      q:"пляж Соболь, остров Русский", img:"bay7.jpg" },
+      q:"пляж Соболь, остров Русский", img:"bay6.jpg" },
     { emoji:"🤿", name:"Бухта Тельковского (о. Русский)",
       desc:"Чистейшая бирюзовая вода, белые скалы и диковатый пляж: купание и снорклинг среди природы — без толп и городской суеты.",
-      q:"бухта Тельковского, остров Русский", img:"bay8.jpg" },
+      q:"бухта Тельковского, остров Русский", img:"bay7.jpg" },
     { emoji:"🌅", name:"Бухта Патрокл",
       desc:"Самый доступный пляж в черте города: ровный песчаный вход в воду, прокат лежаков и закаты над Уссурийским заливом.",
-      q:"бухта Патрокл, Владивосток", img:"bay9.jpg" }
+      q:"бухта Патрокл, Владивосток", img:"bay8.jpg" }
   ];
 
   const bayS = makeSlider({
@@ -759,10 +799,99 @@
   const boxes   = () => [...rList.querySelectorAll('input')];
   const checked = () => boxes().filter(b => b.checked).map(b => routePoints.find(p => p.key === b.value));
 
-  function refreshRoute(){
+  /* ===== МОЁ МЕСТОНАХОЖДЕНИЕ (геолокация браузера) =====
+     Кнопка определяет координаты. Пока места не выбраны — на карте
+     отдельная метка «вы здесь». Если включена галочка, ваша точка встаёт
+     ПЕРВОЙ в маршрут: и во встроенной карте, и в ссылках
+     «Открыть в Яндекс / Google Картах» путь начинается от вас.
+     Текстового маркера «текущее положение» в URL Яндекс Карт нет —
+     координаты получаем геолокацией и подставляем в ссылки. */
+  const geoBtn    = document.getElementById('geoBtn');
+  const geoToggle = document.getElementById('geoToggle');
+  const geoCheck  = document.getElementById('geoCheck');
+  const geoStatus = document.getElementById('geoStatus');
+  let userPos = null; // { lat, lng, ll:"широта,долгота", zoom }
+
+  geoBtn.addEventListener('click', () => {
+    if (!navigator.geolocation){
+      geoStatus.textContent = 'Браузер не поддерживает определение местоположения.';
+      return;
+    }
+    geoBtn.disabled = true;
+    geoStatus.textContent = '📡 Определяем местоположение…';
+    navigator.geolocation.getCurrentPosition(geoOk, geoErr, {
+      enableHighAccuracy:true, timeout:15000, maximumAge:0
+    });
+  });
+
+  function geoOk(pos){
+    const lat6 = pos.coords.latitude.toFixed(6),
+          lng6 = pos.coords.longitude.toFixed(6);
+    userPos = {
+      lat:+lat6, lng:+lng6,
+      ll: lat6 + ',' + lng6,                       // rtext: широта,долгота
+      zoom: pos.coords.accuracy > 2000 ? 11 :      // масштаб подбираем
+            pos.coords.accuracy > 500  ? 13 : 15   // по точности определения
+    };
+    geoBtn.disabled    = false;
+    geoBtn.textContent = '📍 Обновить местоположение';
+    geoToggle.hidden   = false;
+    geoCheck.checked   = true;
+
+    let msg = '📍 Вы здесь: ' + userPos.ll +
+              ' (точность ~' + Math.round(pos.coords.accuracy) +
+              ' м). Маршрут строится от этой точки.';
+    const d = distToVladivostok(userPos.lat, userPos.lng);
+    if (d >= 30) msg += ' ⚠ До Владивостока ≈ ' + Math.round(d) + ' км — путь до города будет неблизким.';
+    geoStatus.textContent = msg;
+    refreshRoute();
+  }
+
+  function geoErr(e){
+    geoBtn.disabled = false;
+    const why = {
+      1:'доступ запрещён — разрешите браузеру определять местоположение',
+      2:'местоположение недоступно (нет сигнала GPS или сети)',
+      3:'вышло время ожидания — попробуйте ещё раз'
+    }[e.code] || (e.message || 'неизвестная ошибка');
+    let msg = '❌ Не удалось определить местоположение: ' + why + '.';
+    if (location.protocol === 'http:')
+      msg += ' Страница открыта по HTTP — браузеры блокируют геолокацию на незащищённых страницах (нужен HTTPS).';
+    if (userPos) msg += ' Остаёмся на последней известной точке: ' + userPos.ll + '.';
+    geoStatus.textContent = msg;
+  }
+
+  /* Расстояние от пользователя до центра Владивостока, км
+     (формула гаверсинусов) — для подсказки «вы далеко от города». */
+  function distToVladivostok(lat, lng){
+    const R = 6371, rad = x => x * Math.PI / 180;
+    const dLat = rad(43.1155 - lat), dLng = rad(131.8855 - lng);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(rad(lat)) * Math.cos(rad(43.1155)) *
+              Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+  }
+
+  geoCheck.addEventListener('change', refreshRoute);
+
+  // Полный список точек: включённая галочка => «моё местонахождение»
+  // идёт первой точкой — маршрут начинается от пользователя.
+  function routePts(){
     const pts = checked();
-    const n   = pts.length;
-    rCount.textContent = 'Выбрано: ' + n;
+    if (userPos && geoCheck.checked){
+      pts.unshift({ key:'me', emoji:'📍', name:'Моё местонахождение', ll:userPos.ll, me:true });
+    }
+    return pts;
+  }
+
+  function refreshRoute(){
+    const pts    = routePts();
+    const n      = pts.length;
+    const places = checked().length;
+    const me     = !!(pts.length && pts[0].me);
+    rCount.textContent = me
+      ? 'Выбрано: ' + places + ' + 📍 моё местонахождение'
+      : 'Выбрано: ' + places;
     yaBtn.classList.toggle('off', n < 2);
     ggBtn.classList.toggle('off', n < 2);
 
@@ -805,9 +934,21 @@
         mapFrame.src = 'https://yandex.ru/map-widget/v1/?rtext=' +
           encodeURIComponent(pts.map(p => p.ll).join('~')) + '&rtt=auto';
         mapMode = 'route';
-        mapStatus.textContent =
-          '🗺 На карте построен автомобильный маршрут через ' + pts.length +
-          ' точек: первая отметка — старт, последняя — финиш.';
+        mapStatus.textContent = pts[0].me
+          ? '🗺 На карте построен автомобильный маршрут от 📍 вашего местонахождения: вы — старт, последняя отметка — финиш.'
+          : '🗺 На карте построен автомобильный маршрут через ' + pts.length +
+            ' точек: первая отметка — старт, последняя — финиш.';
+      } else if (pts.length === 1 && pts[0].me){
+        /* Ваша точка единственная — центрируем карту на вас и ставим метку.
+           В ll и pt координаты пишутся как «долгота,широта» — порядок
+           обратный rtext; стиль pm2rdm — красная метка-булавка. */
+        if (mapMode !== 'geo'){
+          mapFrame.src = 'https://yandex.ru/map-widget/v1/?ll=' + userPos.lng.toFixed(6) + '%2C' +
+                         userPos.lat.toFixed(6) + '&z=' + (userPos.zoom || 14) +
+                         '&pt=' + userPos.lng.toFixed(6) + ',' + userPos.lat.toFixed(6) + ',pm2rdm';
+          mapMode = 'geo';
+          mapStatus.textContent = '📍 Это вы. Отметьте места в списке — маршрут построится отсюда.';
+        }
       } else if (mapMode !== 'home'){
         mapFrame.src = MAP_HOME;
         mapMode = 'home';
