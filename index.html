@@ -42,14 +42,21 @@
       «Токаревский маяк и фуникулёр» и точка маршрута остаются);
       счётчик карусели обновлён: 11 → 10.
   Версия 7 — изменения по заданию:
-  11) в конструктор маршрута добавлен блок «Моё местонахождение»:
-      кнопка определяет координаты геолокацией браузера и показывает вас
-      на встроенной карте отдельной меткой (пока места не выбраны), а
-      при включённой галочке «Начинать маршрут от моего местонахождения»
-      ваша точка встаёт ПЕРВОЙ в маршрут — и во встроенной карте, и в
-      ссылках «Открыть в Яндекс / Google Картах» путь начинается от вас;
-      при ошибке геолокации выводится понятная подсказка, а если вы
-      далеко от города — расстояние до Владивостока.
+  11) в конструктор маршрута добавлена кнопка «Моё местонахождение»:
+      - определяет координаты пользователя с высокой точностью:
+        enableHighAccuracy + до 12 секунд уточнения сигнала через
+        watchPosition, из всех ответов берётся самый точный,
+        в статусе показывается точность в метрах;
+      - маршрут теперь ВСЕГДА начинается с точки, где находится
+        пользователь: она автоматически становится первой точкой
+        маршрута на встроенной карте и в ссылках Яндекс/Google Карт
+        (маршрут строится, даже если выбрано всего одно место);
+      - если разрешение на геолокацию уже выдавалось, точка тихо
+        восстанавливается при открытии страницы;
+      - полная обработка ошибок: запрет доступа, выключенная
+        геолокация, таймаут, незащищённое соединение (нужен HTTPS);
+      - кнопка «Обновить местонахождение» заново уточняет координаты,
+        кнопка «✖» убирает точку из маршрута.
   ============================================================
 -->
 <style>
@@ -220,6 +227,44 @@
   }
   .route-presets button:hover{background:#e8f2f8}
 
+  /* ===== МОЁ МЕСТОНАХОЖДЕНИЕ (геолокация) ===== */
+  .geo-block{
+    margin-bottom:16px;padding:14px 16px;
+    border:1.5px dashed var(--sea-light);border-radius:14px;background:#eef6fb;
+  }
+  .geo-row{display:flex;gap:8px;align-items:stretch}
+  .geo-btn{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:10px;
+    font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;
+    padding:13px 18px;border-radius:30px;border:none;
+    background:var(--sea);color:#fff;transition:.25s;
+    box-shadow:0 6px 14px rgba(14,74,110,.3);
+  }
+  .geo-btn:hover{background:var(--sea-light)}
+  .geo-btn:disabled:hover{background:var(--sea)}
+  .geo-btn:active{transform:scale(.98)}
+  .geo-btn:disabled{cursor:progress;opacity:.9}
+  .geo-btn .geo-icon{font-size:1.15rem;line-height:1}
+  .geo-btn.searching .geo-icon{animation:geoPulse 1s ease-in-out infinite}
+  .geo-btn.fixed{background:#2e7d32}
+  .geo-btn.fixed:hover{background:#357a38}
+  .geo-btn.fixed:disabled:hover{background:#2e7d32}
+  @keyframes geoPulse{
+    0%,100%{transform:scale(1);opacity:1}
+    50%{transform:scale(1.35);opacity:.5}
+  }
+  .geo-reset{
+    flex:none;width:48px;border-radius:30px;cursor:pointer;
+    border:1.5px solid #d5e2ea;background:#fff;color:#5a6b78;
+    font-size:.95rem;font-weight:700;transition:.2s;
+  }
+  .geo-reset:hover{border-color:#e53935;color:#e53935;background:#fdecea}
+  .geo-reset[hidden]{display:none}
+  .geo-status{font-size:.88rem;color:#5a6b78;margin-top:10px;line-height:1.45}
+  .geo-status.ok{color:#2e7d32;font-weight:600}
+  .geo-status.err{color:#c62828}
+  .geo-status.wait{color:var(--sea-light)}
+
   #routeList{
     display:flex;flex-direction:column;
     max-height:460px;overflow:auto;
@@ -235,27 +280,6 @@
   .route-item input{width:18px;height:18px;accent-color:var(--sea);flex:none;cursor:pointer}
   .route-item .r-emoji{font-size:1.25rem;flex:none}
   .route-item span:last-child{font-size:.97rem}
-
-  /* ===== МОЁ МЕСТОНАХОЖДЕНИЕ (геолокация) ===== */
-  .geo-box{
-    margin:0 0 16px;padding:14px 16px 12px;
-    background:#eef6fb;border:1.5px dashed var(--sea-light);
-    border-radius:14px;
-  }
-  .geo-btn{
-    font-family:inherit;font-size:.92rem;font-weight:700;cursor:pointer;
-    padding:10px 20px;border-radius:22px;border:none;
-    background:var(--sea);color:#fff;transition:.25s;
-  }
-  .geo-btn:hover{background:var(--accent);color:#143246;transform:scale(1.03)}
-  .geo-btn:disabled{opacity:.55;cursor:wait;transform:none}
-  .geo-toggle{
-    display:flex;align-items:center;gap:10px;margin-top:10px;
-    cursor:pointer;font-size:.95rem;font-weight:600;
-  }
-  .geo-toggle[hidden]{display:none}
-  .geo-toggle input{width:18px;height:18px;accent-color:var(--sea);cursor:pointer;flex:none}
-  .geo-status{font-size:.85rem;color:#41545f;margin-top:8px;line-height:1.45}
 
   .route-side .route-count{
     font-weight:700;color:var(--sea);margin-bottom:12px;font-size:1.05rem;
@@ -306,6 +330,8 @@
     .route-grid{grid-template-columns:1fr}
     .route-card{padding:16px}
     #routeList{max-height:380px}
+    .geo-block{padding:12px}
+    .geo-btn{font-size:.95rem;padding:12px 14px}
     .route-map iframe{height:300px}
     footer{padding:22px 16px;font-size:.85rem}
   }
@@ -443,20 +469,21 @@
   </div>
 </section>
 
-<!-- ================= ПАНЕЛЬ 5: МАРШРУТ ЭКСКУРСИИ (+ МОЁ МЕСТОНАХОЖДЕНИЕ) ================= -->
+<!-- ================= ПАНЕЛЬ 5: МАРШРУТ ЭКСКУРСИИ (БЕЗ ИЗМЕНЕНИЙ) ================= -->
 <section class="panel" id="panel-route">
   <h2>🗺 Маршрут экскурсии</h2>
-  <p class="sub">Отметьте места галочками — первая отметка станет стартом, последняя финишем. Можно начать маршрут от точки, где вы находитесь, — включите «Моё местонахождение». Или возьмите готовый маршрут.</p>
+  <p class="sub">Нажмите «Моё местонахождение» — маршрут всегда будет начинаться оттуда, где вы находитесь. Отметьте места галочками (последняя отметка — финиш) или возьмите готовый маршрут.</p>
 
   <div class="route-grid">
     <div class="route-card">
-      <div class="geo-box" id="geoBox">
-        <button type="button" class="geo-btn" id="geoBtn">📍 Определить моё местонахождение</button>
-        <label class="geo-toggle" id="geoToggle" hidden>
-          <input type="checkbox" id="geoCheck">
-          <span>Начинать маршрут от моего местонахождения</span>
-        </label>
-        <p class="geo-status" id="geoStatus">Нажмите кнопку и разрешите браузеру определить, где вы: на карте появится ваша метка, а маршрут будет строиться от этой точки.</p>
+      <div class="geo-block">
+        <div class="geo-row">
+          <button type="button" id="geoBtn" class="geo-btn">
+            <span class="geo-icon">📍</span><span id="geoBtnText">Моё местонахождение</span>
+          </button>
+          <button type="button" id="geoReset" class="geo-reset" title="Убрать моё местонахождение из маршрута" hidden>✖</button>
+        </div>
+        <p class="geo-status" id="geoStatus" aria-live="polite">Маршрут всегда будет начинаться оттуда, где вы находитесь. Нажмите кнопку — браузер попросит разрешение на геолокацию.</p>
       </div>
 
       <div class="route-presets">
@@ -484,8 +511,12 @@
       <p class="route-note">
         💡 Карта маршрута встроена прямо в страницу и обновляется сама при выборе мест.
         Кнопки ниже открывают готовый маршрут в Яндекс или Google Картах в новой вкладке.
-        Порядок маршрута = порядок мест в списке сверху вниз; если включено
-        «Моё местонахождение» — путь стартует от вас.
+        Порядок маршрута: 📍 моё местонахождение (если определено) → места в порядке списка сверху вниз.
+      </p>
+      <p class="route-note">
+        📡 «Моё местонахождение» точнее всего работает на телефоне с включённым GPS
+        (погрешность — несколько метров); на компьютере точность зависит от Wi-Fi.
+        Если браузер спросит разрешение — нажмите «Разрешить».
       </p>
       <p class="route-note">
         🚗 Маршрут строится по автомобильным дорогам — это стандартный режим обеих карт.
@@ -799,107 +830,26 @@
   const boxes   = () => [...rList.querySelectorAll('input')];
   const checked = () => boxes().filter(b => b.checked).map(b => routePoints.find(p => p.key === b.value));
 
-  /* ===== МОЁ МЕСТОНАХОЖДЕНИЕ (геолокация браузера) =====
-     Кнопка определяет координаты. Пока места не выбраны — на карте
-     отдельная метка «вы здесь». Если включена галочка, ваша точка встаёт
-     ПЕРВОЙ в маршрут: и во встроенной карте, и в ссылках
-     «Открыть в Яндекс / Google Картах» путь начинается от вас.
-     Текстового маркера «текущее положение» в URL Яндекс Карт нет —
-     координаты получаем геолокацией и подставляем в ссылки. */
-  const geoBtn    = document.getElementById('geoBtn');
-  const geoToggle = document.getElementById('geoToggle');
-  const geoCheck  = document.getElementById('geoCheck');
-  const geoStatus = document.getElementById('geoStatus');
-  let userPos = null; // { lat, lng, ll:"широта,долгота", zoom }
-
-  geoBtn.addEventListener('click', () => {
-    if (!navigator.geolocation){
-      geoStatus.textContent = 'Браузер не поддерживает определение местоположения.';
-      return;
-    }
-    geoBtn.disabled = true;
-    geoStatus.textContent = '📡 Определяем местоположение…';
-    navigator.geolocation.getCurrentPosition(geoOk, geoErr, {
-      enableHighAccuracy:true, timeout:15000, maximumAge:0
-    });
-  });
-
-  function geoOk(pos){
-    const lat6 = pos.coords.latitude.toFixed(6),
-          lng6 = pos.coords.longitude.toFixed(6);
-    userPos = {
-      lat:+lat6, lng:+lng6,
-      ll: lat6 + ',' + lng6,                       // rtext: широта,долгота
-      zoom: pos.coords.accuracy > 2000 ? 11 :      // масштаб подбираем
-            pos.coords.accuracy > 500  ? 13 : 15   // по точности определения
-    };
-    geoBtn.disabled    = false;
-    geoBtn.textContent = '📍 Обновить местоположение';
-    geoToggle.hidden   = false;
-    geoCheck.checked   = true;
-
-    let msg = '📍 Вы здесь: ' + userPos.ll +
-              ' (точность ~' + Math.round(pos.coords.accuracy) +
-              ' м). Маршрут строится от этой точки.';
-    const d = distToVladivostok(userPos.lat, userPos.lng);
-    if (d >= 30) msg += ' ⚠ До Владивостока ≈ ' + Math.round(d) + ' км — путь до города будет неблизким.';
-    geoStatus.textContent = msg;
-    refreshRoute();
-  }
-
-  function geoErr(e){
-    geoBtn.disabled = false;
-    const why = {
-      1:'доступ запрещён — разрешите браузеру определять местоположение',
-      2:'местоположение недоступно (нет сигнала GPS или сети)',
-      3:'вышло время ожидания — попробуйте ещё раз'
-    }[e.code] || (e.message || 'неизвестная ошибка');
-    let msg = '❌ Не удалось определить местоположение: ' + why + '.';
-    if (location.protocol === 'http:')
-      msg += ' Страница открыта по HTTP — браузеры блокируют геолокацию на незащищённых страницах (нужен HTTPS).';
-    if (userPos) msg += ' Остаёмся на последней известной точке: ' + userPos.ll + '.';
-    geoStatus.textContent = msg;
-  }
-
-  /* Расстояние от пользователя до центра Владивостока, км
-     (формула гаверсинусов) — для подсказки «вы далеко от города». */
-  function distToVladivostok(lat, lng){
-    const R = 6371, rad = x => x * Math.PI / 180;
-    const dLat = rad(43.1155 - lat), dLng = rad(131.8855 - lng);
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(rad(lat)) * Math.cos(rad(43.1155)) *
-              Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
-  }
-
-  geoCheck.addEventListener('change', refreshRoute);
-
-  // Полный список точек: включённая галочка => «моё местонахождение»
-  // идёт первой точкой — маршрут начинается от пользователя.
-  function routePts(){
-    const pts = checked();
-    if (userPos && geoCheck.checked){
-      pts.unshift({ key:'me', emoji:'📍', name:'Моё местонахождение', ll:userPos.ll, me:true });
-    }
-    return pts;
-  }
-
   function refreshRoute(){
-    const pts    = routePts();
-    const n      = pts.length;
-    const places = checked().length;
-    const me     = !!(pts.length && pts[0].me);
-    rCount.textContent = me
-      ? 'Выбрано: ' + places + ' + 📍 моё местонахождение'
-      : 'Выбрано: ' + places;
-    yaBtn.classList.toggle('off', n < 2);
-    ggBtn.classList.toggle('off', n < 2);
+    const pts = checked();
+    const n   = pts.length;
+
+    /* 📍 Если местонахождение определено — оно ВСЕГДА становится первой
+       точкой маршрута (стартом), независимо от порядка галочек.
+       Благодаря этому маршрут строится, даже если выбрано одно место. */
+    const all = (myPos
+      ? [{ ll: myPos.lat.toFixed(6) + ',' + myPos.lon.toFixed(6), mine: true }]
+      : []).concat(pts);
+
+    rCount.textContent = 'Выбрано: ' + n + (myPos ? ' + 📍 моё местонахождение' : '');
+    yaBtn.classList.toggle('off', all.length < 2);
+    ggBtn.classList.toggle('off', all.length < 2);
 
     /* Ссылки формируются сразу при изменении выбора, а не в момент клика.
        Исправление ошибки: раньше при открытии ссылки в новой вкладке
        (или долгом нажатии на телефоне) открывалась пустая страница «#». */
-    if (n >= 2){
-      const seq = pts.map(p => p.ext || p.ll);
+    if (all.length >= 2){
+      const seq = all.map(p => p.ext || p.ll);
       yaBtn.href = 'https://yandex.ru/maps/?rtext=' +
         encodeURIComponent(seq.join('~')) + '&rtt=auto';
 
@@ -914,9 +864,169 @@
       ggBtn.href = '#';
     }
 
-    updateMap(pts);
+    updateMap(all);
   }
   rList.addEventListener('change', refreshRoute);
+
+  /* ============================================================
+     📍 МОЁ МЕСТОНАХОЖДЕНИЕ — геолокация с высокой точностью
+     1) getCurrentPosition с enableHighAccuracy даёт быстрый первый фикс;
+     2) затем до 12 секунд уточняем сигнал через watchPosition и из всех
+        ответов берём самый точный (наименьшая погрешность в метрах);
+     3) определённая точка ВСЕГДА ставится первой точкой маршрута;
+     4) все ошибки (запрет доступа, выключенный GPS, таймаут, http без
+        HTTPS) обрабатываются с понятными подсказками.
+  ============================================================ */
+  const geoBtn    = document.getElementById('geoBtn');
+  const geoBtnTxt = document.getElementById('geoBtnText');
+  const geoReset  = document.getElementById('geoReset');
+  const geoStatus = document.getElementById('geoStatus');
+
+  let myPos = null;          // {lat, lon, acc} — лучшая определённая точка
+  let geoBusy = false;       // идёт определение
+  let geoWatchId = null;     // id watchPosition
+  let geoTimer = null;       // таймер остановки уточнения
+  let geoBest = null;        // лучший фикс текущего сеанса
+  let geoNoImprove = 0;      // сколько фиксов подряд без улучшения
+  let geoFirstShown = false; // маршрут уже перестроен по первому фикс?
+
+  function geoSetStatus(text, cls){
+    geoStatus.textContent = text;
+    geoStatus.className = 'geo-status' + (cls ? ' ' + cls : '');
+  }
+
+  /* Останавливает определение, приводит кнопку в порядок, обновляет маршрут */
+  function geoStop(){
+    geoBusy = false;
+    if (geoWatchId !== null){
+      try { navigator.geolocation.clearWatch(geoWatchId); } catch (e) {}
+      geoWatchId = null;
+    }
+    clearTimeout(geoTimer);
+    geoBtn.disabled = false;
+    geoBtn.classList.remove('searching');
+    geoBtn.classList.toggle('fixed', !!myPos);
+    geoBtnTxt.textContent = myPos ? 'Обновить местонахождение' : 'Моё местонахождение';
+    geoReset.hidden = !myPos;
+    refreshRoute();
+  }
+
+  /* Успешное завершение определения (лучший фикс уже сохранён в myPos) */
+  function geoDone(){
+    geoStop();
+    if (!myPos) return;
+    const a = Math.round(myPos.acc);
+    if (a <= 30){
+      geoSetStatus('✓ Местонахождение определено: точность ±' + a +
+        ' м. Любой маршрут теперь начинается отсюда.', 'ok');
+    } else {
+      geoSetStatus('Местонахождение определено: точность ±' + a +
+        ' м. Для большей точности включите GPS (на телефоне) или подключитесь к Wi-Fi (на компьютере) и нажмите «Обновить местонахождение».', 'wait');
+    }
+  }
+
+  /* Обработка каждого фикса: сохраняем лучший, при достаточной точности
+     (±10 м) или после 3 фиксов подряд без улучшения — завершаем */
+  function geoAccept(coords){
+    if (!geoBusy) return;
+    const fix = { lat: coords.latitude, lon: coords.longitude, acc: coords.accuracy };
+    if (!geoBest || fix.acc < geoBest.acc){ geoBest = fix; geoNoImprove = 0; }
+    else { geoNoImprove++; }
+    myPos = geoBest;
+    geoSetStatus('📡 Уточняем сигнал… точность ±' + Math.round(geoBest.acc) + ' м', 'wait');
+    if (!geoFirstShown){ geoFirstShown = true; refreshRoute(); } // маршрут виден сразу
+    if (geoBest.acc <= 10 || geoNoImprove >= 3) geoDone();
+  }
+
+  function geoError(err){
+    let msg;
+    switch (err && err.code){
+      case 1: msg = 'Доступ к геолокации запрещён. Нажмите значок 🔒 (или ⚙) рядом с адресной строкой, разрешите «Местоположение» и попробуйте снова. Если страница открыта с диска — откройте её по HTTPS или через локальный сервер.'; break;
+      case 2: msg = 'Не удалось определить местонахождение. Проверьте, что геолокация (GPS) включена в настройках устройства, и попробуйте снова.'; break;
+      case 3: msg = 'Не удалось получить точные данные за отведённое время. Выйдите на открытое место и нажмите кнопку ещё раз.'; break;
+      default: msg = 'Геолокация недоступна в этом браузере. Обновите браузер или откройте страницу в Chrome / Safari / Firefox.';
+    }
+    geoSetStatus(msg, 'err');
+    geoStop();
+  }
+
+  geoBtn.addEventListener('click', () => {
+    if (geoBusy) return;
+
+    if (!('geolocation' in navigator)){
+      geoSetStatus('Ваш браузер не поддерживает геолокацию. Обновите браузер или откройте страницу в Chrome / Safari / Firefox.', 'err');
+      return;
+    }
+    if (!window.isSecureContext && location.protocol !== 'file:'){
+      geoSetStatus('Браузеры разрешают геолокацию только на защищённых страницах. Откройте сайт по HTTPS (или на localhost) и попробуйте снова.', 'err');
+      return;
+    }
+
+    geoBusy = true;
+    geoBest = null;
+    geoNoImprove = 0;
+    geoFirstShown = false;
+    geoBtn.disabled = true;
+    geoBtn.classList.add('searching');
+    geoBtnTxt.textContent = 'Определяем…';
+
+    geoSetStatus(
+      location.protocol === 'file:'
+        ? '📡 Определяем местонахождение… (страница открыта с диска: если браузер запретит доступ, откройте её по HTTPS или через локальный сервер)'
+        : '📡 Определяем местонахождение… На телефоне это может занять до минуты — лучше выйти на открытое место.',
+      'wait');
+
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        geoAccept(pos.coords);
+        if (!geoBusy) return;  // уже получили достаточно точный фикс
+        try {
+          geoWatchId = navigator.geolocation.watchPosition(
+            wp => geoAccept(wp.coords),
+            () => {},  // ошибки уточнения игнорируем: первый фикс уже есть
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+          );
+        } catch (e) {}
+        geoTimer = setTimeout(geoDone, 12000); // страховка: не позже 12 с берём лучший результат
+      },
+      geoError,
+      { enableHighAccuracy: true, timeout: 25000, maximumAge: 0 }
+    );
+  });
+
+  geoReset.addEventListener('click', () => {
+    if (geoBusy) return;
+    myPos = null;
+    geoBtn.classList.remove('fixed');
+    geoBtnTxt.textContent = 'Моё местонахождение';
+    geoReset.hidden = true;
+    geoSetStatus('Точка местонахождения убрана. Стартом маршрута снова станет первая отметка в списке.', '');
+    refreshRoute();
+  });
+
+  /* Если разрешение на геолокацию уже выдавалось — точка тихо
+     восстанавливается при открытии страницы, и любой маршрут
+     снова начинается от местонахождения пользователя */
+  try {
+    if (navigator.permissions && navigator.permissions.query){
+      navigator.permissions.query({ name: 'geolocation' }).then(st => {
+        if (st.state !== 'granted') return;
+        navigator.geolocation.getCurrentPosition(pos => {
+          if (geoBusy) return;
+          const fix = { lat: pos.coords.latitude, lon: pos.coords.longitude, acc: pos.coords.accuracy };
+          if (!myPos || fix.acc < myPos.acc){
+            myPos = fix;
+            geoBtn.classList.add('fixed');
+            geoBtnTxt.textContent = 'Обновить местонахождение';
+            geoReset.hidden = false;
+            geoSetStatus('📍 Местонахождение определено автоматически (разрешение уже выдано): точность ±' +
+              Math.round(fix.acc) + ' м. Любой маршрут начнётся отсюда. Нажмите «Обновить местонахождение», чтобы уточнить точность по GPS.', 'ok');
+            refreshRoute();
+          }
+        }, () => {}, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+      }).catch(() => {});
+    }
+  } catch (e) {}
 
   /* ===== ВСТРОЕННАЯ КАРТА МАРШРУТА (виджет Яндекс Карт, без API-ключа) =====
      rtext — точки маршрута в формате «широта,долгота», разделённые «~».
@@ -927,6 +1037,14 @@
   let mapTimer = null;
   let mapMode  = 'home';
 
+  /* Склонение русских числительных: plural(2, 'место', 'места', 'мест') */
+  function plural(n, one, few, many){
+    const m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return one;
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+    return many;
+  }
+
   function updateMap(pts){
     clearTimeout(mapTimer);
     mapTimer = setTimeout(() => {
@@ -934,21 +1052,24 @@
         mapFrame.src = 'https://yandex.ru/map-widget/v1/?rtext=' +
           encodeURIComponent(pts.map(p => p.ll).join('~')) + '&rtt=auto';
         mapMode = 'route';
-        mapStatus.textContent = pts[0].me
-          ? '🗺 На карте построен автомобильный маршрут от 📍 вашего местонахождения: вы — старт, последняя отметка — финиш.'
-          : '🗺 На карте построен автомобильный маршрут через ' + pts.length +
+        if (myPos && pts[0] && pts[0].mine){
+          const k = pts.length - 1;   // количество выбранных мест (без 📍)
+          mapStatus.textContent =
+            '🗺 Маршрут построен: старт — 📍 ваше местонахождение (точность ±' +
+            Math.round(myPos.acc) + ' м), далее ' + k + ' ' +
+            plural(k, 'выбранное место', 'выбранных места', 'выбранных мест') +
+            '. Последняя отметка — финиш.';
+        } else {
+          mapStatus.textContent =
+            '🗺 На карте построен автомобильный маршрут через ' + pts.length +
             ' точек: первая отметка — старт, последняя — финиш.';
-      } else if (pts.length === 1 && pts[0].me){
-        /* Ваша точка единственная — центрируем карту на вас и ставим метку.
-           В ll и pt координаты пишутся как «долгота,широта» — порядок
-           обратный rtext; стиль pm2rdm — красная метка-булавка. */
-        if (mapMode !== 'geo'){
-          mapFrame.src = 'https://yandex.ru/map-widget/v1/?ll=' + userPos.lng.toFixed(6) + '%2C' +
-                         userPos.lat.toFixed(6) + '&z=' + (userPos.zoom || 14) +
-                         '&pt=' + userPos.lng.toFixed(6) + ',' + userPos.lat.toFixed(6) + ',pm2rdm';
-          mapMode = 'geo';
-          mapStatus.textContent = '📍 Это вы. Отметьте места в списке — маршрут построится отсюда.';
         }
+      } else if (myPos && pts.length === 1 && pts[0].mine){
+        if (mapMode !== 'home') mapFrame.src = MAP_HOME;
+        mapMode = 'home';
+        mapStatus.textContent =
+          '📍 Ваше местонахождение определено (точность ±' + Math.round(myPos.acc) +
+          ' м). Отметьте хотя бы одно место — маршрут начнётся от вас.';
       } else if (mapMode !== 'home'){
         mapFrame.src = MAP_HOME;
         mapMode = 'home';
